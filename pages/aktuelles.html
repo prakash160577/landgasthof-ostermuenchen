@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aktuelles – Landgasthof Ostermünchen</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/6dd4bbd1-c9c8-4360-bef3-84542acfd8bf/image-384x229.png" alt="Logo">
+      <div class="logo-text">Landgasthof Ostermünchen<span>Gut bürgerliche Küche</span></div>
+    </a>
+    <button class="nav-toggle" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="main-nav">
+      <li><a href="../index.html">Start</a></li>
+      <li><a href="speisekarte.html">Speisekarte</a></li>
+      <li><a href="raeume.html">Räume</a></li>
+      <li><a href="aktuelles.html">Aktuelles</a></li>
+      <li><a href="kontakt.html">Kontakt</a></li>
+      <li><a href="do-samma.html">Do samma</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Aktuelles</h1>
+    <p class="sub">Neuigkeiten aus dem Landgasthof</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div class="news-grid" id="news-data">
+      <!-- filled by data.js -->
+      <div class="news-card">
+        <div class="news-date">Juni 2025</div>
+        <h3>Biergarten geöffnet!</h3>
+        <p>Der Kastanienbiergarten ist ab sofort täglich bei schönem Wetter geöffnet. Wir freuen uns auf Euch!</p>
+        <img class="news-img" src="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/da01e92e-08b1-4a91-9d43-51b1aa24670b/l0,t0,w1416,h2000/image-768x1085.jpg" alt="Biergarten" loading="lazy">
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-col"><h4>Adresse</h4><p>Rotter Straße 2, 83104 Tuntenhausen</p></div>
+      <div class="footer-col"><h4>Kontakt</h4><p>📞 <a href="tel:+4980678815600">08067 / 8815600</a></p></div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="../index.html">Startseite</a>
+        <a href="speisekarte.html">Speisekarte</a>
+        <a href="raeume.html">Räume</a>
+        <a href="kontakt.html">Kontakt</a>
+      </div>
+      <div class="footer-col"><h4>Rechtliches</h4><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 Landgasthof Ostermünchen</span></div>
+  </div>
+</footer>
+
+<script src="../js/shared.js"></script>
+<script src="../js/data.js"></script>
+<script>
+  if (typeof LG_DATA !== 'undefined' && LG_DATA.news) {
+    document.getElementById('news-data').innerHTML = LG_DATA.news.map(n => `
+      <div class="news-card">
+        <div class="news-date">${n.date}</div>
+        <h3>${n.title}</h3>
+        <p>${n.text}</p>
+        ${n.img ? `<img class="news-img" src="${n.img}" alt="${n.title}" loading="lazy">` : ''}
+      </div>`).join('');
+  }
+</script>
+</body>
+</html>

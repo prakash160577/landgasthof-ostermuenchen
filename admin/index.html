@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Admin – Landgasthof Ostermünchen</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <meta name="theme-color" content="#2C4A35">
+  <style>
+    /* Extra mobile touch targets */
+    input, textarea, select { font-size: 16px !important; } /* prevent iOS zoom */
+  </style>
+</head>
+<body class="admin-body">
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" class="admin-login">
+  <div class="login-box">
+    <h2>🏡 Admin-Zugang</h2>
+    <p style="text-align:center; color:var(--muted); font-size:.9rem; margin-bottom:1.5rem">Landgasthof Ostermünchen</p>
+    <div class="field-group">
+      <label>Passwort</label>
+      <input type="password" id="pw-input" placeholder="Passwort eingeben" autocomplete="current-password">
+    </div>
+    <button class="btn-save" onclick="doLogin()">Anmelden</button>
+    <p id="login-error" style="color:#c0392b; text-align:center; margin-top:.75rem; font-size:.9rem; display:none">Falsches Passwort</p>
+  </div>
+</div>
+
+<!-- MAIN APP (hidden until login) -->
+<div id="app" style="display:none">
+
+  <header class="admin-header">
+    <div>
+      <div style="font-size:.7rem; opacity:.7; text-transform:uppercase; letter-spacing:.08em">Admin</div>
+      <h1>🏡 Landgasthof Ostermünchen</h1>
+    </div>
+    <button onclick="doLogout()" style="background:rgba(255,255,255,.15); border:none; color:white; padding:.4rem .85rem; border-radius:20px; font-size:.8rem; cursor:pointer; font-weight:600">Abmelden</button>
+  </header>
+
+  <!-- TAB NAV -->
+  <nav class="admin-nav" id="admin-nav">
+    <button class="active" onclick="showTab('tab-start')">🏠 Start</button>
+    <button onclick="showTab('tab-menu')">🍽 Speisekarte</button>
+    <button onclick="showTab('tab-hours')">🕐 Öffnungszeiten</button>
+    <button onclick="showTab('tab-news')">📰 Aktuelles</button>
+    <button onclick="showTab('tab-contact')">📞 Kontakt</button>
+    <button onclick="showTab('tab-export')">💾 Export</button>
+  </nav>
+
+  <div class="admin-content">
+
+    <!-- ===== TAB: START ===== -->
+    <div id="tab-start" class="admin-section visible">
+      <div class="admin-card">
+        <h3>Willkommenstext</h3>
+        <div class="field-group">
+          <label>Text auf der Startseite</label>
+          <textarea id="s-welcome" rows="4"></textarea>
+        </div>
+        <div class="field-group">
+          <label>Wirtsleut-Signatur</label>
+          <input type="text" id="s-wirtsleute" placeholder="Beppo & Margit mit unserem Team">
+        </div>
+        <button class="btn-save" onclick="saveStart()">Speichern</button>
+      </div>
+
+      <div class="admin-card">
+        <h3>☀️ Sonntags-Special</h3>
+        <div class="field-group">
+          <label>Gericht</label>
+          <input type="text" id="s-sun-name">
+        </div>
+        <div class="field-group">
+          <label>Beschreibung</label>
+          <input type="text" id="s-sun-desc">
+        </div>
+        <div class="field-group">
+          <label>Preis</label>
+          <input type="text" id="s-sun-price" placeholder="13,80 €">
+        </div>
+        <div class="field-group">
+          <label>Anzeigen?</label>
+          <select id="s-sun-active">
+            <option value="true">Ja – anzeigen</option>
+            <option value="false">Nein – verstecken</option>
+          </select>
+        </div>
+        <button class="btn-save" onclick="saveSunday()">Speichern</button>
+      </div>
+    </div>
+
+    <!-- ===== TAB: SPEISEKARTE ===== -->
+    <div id="tab-menu" class="admin-section">
+      <div class="admin-card">
+        <h3>Tagesgerichte</h3>
+        <p style="font-size:.85rem; color:var(--muted); margin-bottom:1rem">Gerichte bearbeiten, hinzufügen oder löschen.</p>
+        <button class="btn-add" onclick="addDish()">+ Gericht hinzufügen</button>
+        <div id="dish-list"></div>
+        <button class="btn-save" onclick="saveMenu()">Speisekarte speichern</button>
+      </div>
+    </div>
+
+    <!-- ===== TAB: ÖFFNUNGSZEITEN ===== -->
+    <div id="tab-hours" class="admin-section">
+      <div id="hours-list"></div>
+      <button class="btn-save" onclick="saveHours()" style="margin-top:.5rem">Öffnungszeiten speichern</button>
+    </div>
+
+    <!-- ===== TAB: AKTUELLES ===== -->
+    <div id="tab-news" class="admin-section">
+      <button class="btn-add" onclick="addNews()" style="margin-bottom:.75rem">+ Beitrag hinzufügen</button>
+      <div id="news-list"></div>
+      <button class="btn-save" onclick="saveNews()">Aktuelles speichern</button>
+    </div>
+
+    <!-- ===== TAB: KONTAKT ===== -->
+    <div id="tab-contact" class="admin-section">
+      <div class="admin-card">
+        <h3>Kontaktdaten</h3>
+        <div class="field-group"><label>Name</label><input type="text" id="c-name"></div>
+        <div class="field-group"><label>Adresse</label><input type="text" id="c-address"></div>
+        <div class="field-group"><label>Telefon</label><input type="tel" id="c-tel"></div>
+        <div class="field-group"><label>Mobil</label><input type="tel" id="c-mobile"></div>
+        <div class="field-group"><label>E-Mail</label><input type="email" id="c-email"></div>
+        <button class="btn-save" onclick="saveContact()">Speichern</button>
+      </div>
+    </div>
+
+    <!-- ===== TAB: EXPORT ===== -->
+    <div id="tab-export" class="admin-section">
+      <div class="admin-card">
+        <h3>💾 data.js exportieren</h3>
+        <p style="font-size:.9rem; color:var(--muted); margin-bottom:1rem">
+          Alle Änderungen werden hier in die Datei <code>data.js</code> exportiert. 
+          Diese Datei dann bei GitHub ersetzen – fertig!
+        </p>
+        <button class="btn-save" onclick="exportData()">Datei generieren &amp; herunterladen</button>
+      </div>
+
+      <div class="admin-card" style="margin-top:1rem">
+        <h3>📋 Vorschau (data.js Inhalt)</h3>
+        <p style="font-size:.85rem; color:var(--muted); margin-bottom:.75rem">Zum Kopieren antippen:</p>
+        <textarea id="export-preview" style="font-family:monospace; font-size:.78rem; min-height:300px; background:#f8f8f8; border:1px solid var(--border); padding:.75rem; border-radius:var(--radius); width:100%; resize:vertical; color:#333" readonly onclick="this.select()"></textarea>
+        <button class="btn-save" style="margin-top:.5rem; background:var(--amber)" onclick="copyExport()">📋 In Zwischenablage kopieren</button>
+      </div>
+
+      <div class="admin-card" style="margin-top:1rem; background:var(--linen)">
+        <h3>📖 Anleitung: Website aktualisieren</h3>
+        <ol style="padding-left:1.25rem; font-size:.9rem; line-height:2">
+          <li>Änderungen hier eingeben und speichern</li>
+          <li>"Datei generieren" klicken → <code>data.js</code> wird heruntergeladen</li>
+          <li>GitHub öffnen → Repository → <code>js/data.js</code></li>
+          <li>Stift-Symbol (✏️) → Inhalt ersetzen → Commit</li>
+          <li>Website aktualisiert sich automatisch ✅</li>
+        </ol>
+      </div>
+    </div>
+
+  </div><!-- /admin-content -->
+</div><!-- /app -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+//  ADMIN APP LOGIC
+// ============================================================
+
+// Simple client-side password (no server needed for GitHub Pages)
+// Change this to your own password!
+var ADMIN_PASSWORD = 'gasthof2025';
+
+var data = null; // will hold LG_DATA
+
+// ---- LOGIN ----
+function doLogin() {
+  var pw = document.getElementById('pw-input').value;
+  if (pw === ADMIN_PASSWORD) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = '';
+    sessionStorage.setItem('lg_admin', '1');
+    loadData();
+  } else {
+    document.getElementById('login-error').style.display = '';
+  }
+}
+document.getElementById('pw-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doLogin();
+});
+// Auto-login if session active
+if (sessionStorage.getItem('lg_admin') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = '';
+}
+
+function doLogout() {
+  sessionStorage.removeItem('lg_admin');
+  location.reload();
+}
+
+// ---- DATA LOAD ----
+function loadData() {
+  // Try localStorage first (edited data), then LG_DATA from data.js
+  var stored = localStorage.getItem('lg_admin_data');
+  if (stored) {
+    try { data = JSON.parse(stored); } catch(e) { data = null; }
+  }
+  if (!data) {
+    // Load from data.js dynamically
+    var script = document.createElement('script');
+    script.src = '../js/data.js';
+    script.onload = function() {
+      data = JSON.parse(JSON.stringify(LG_DATA));
+      fillForms();
+      updateExportPreview();
+    };
+    document.head.appendChild(script);
+    return;
+  }
+  fillForms();
+  updateExportPreview();
+}
+
+function saveToStorage() {
+  localStorage.setItem('lg_admin_data', JSON.stringify(data));
+  updateExportPreview();
+}
+
+// ---- FILL FORMS ----
+function fillForms() {
+  // Start
+  document.getElementById('s-welcome').value = data.welcome || '';
+  document.getElementById('s-wirtsleute').value = data.wirtsleute || '';
+  if (data.sundaySpecial) {
+    document.getElementById('s-sun-name').value = data.sundaySpecial.name || '';
+    document.getElementById('s-sun-desc').value = data.sundaySpecial.desc || '';
+    document.getElementById('s-sun-price').value = data.sundaySpecial.price || '';
+    document.getElementById('s-sun-active').value = data.sundaySpecial.active ? 'true' : 'false';
+  }
+  // Menu
+  renderDishList();
+  // Hours
+  renderHoursList();
+  // News
+  renderNewsList();
+  // Contact
+  if (data.contact) {
+    document.getElementById('c-name').value = data.contact.name || '';
+    document.getElementById('c-address').value = data.contact.address || '';
+    document.getElementById('c-tel').value = data.contact.tel || '';
+    document.getElementById('c-mobile').value = data.contact.mobile || '';
+    document.getElementById('c-email').value = data.contact.email || '';
+  }
+}
+
+// ---- TABS ----
+function showTab(id) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('visible'));
+  document.getElementById(id).classList.add('visible');
+  document.querySelectorAll('.admin-nav button').forEach((b, i) => {
+    b.classList.remove('active');
+  });
+  event.target.classList.add('active');
+}
+
+// ---- START TAB ----
+function saveStart() {
+  data.welcome = document.getElementById('s-welcome').value;
+  data.wirtsleute = document.getElementById('s-wirtsleute').value;
+  saveToStorage();
+  toast('✅ Gespeichert!');
+}
+function saveSunday() {
+  data.sundaySpecial = {
+    name: document.getElementById('s-sun-name').value,
+    desc: document.getElementById('s-sun-desc').value,
+    price: document.getElementById('s-sun-price').value,
+    active: document.getElementById('s-sun-active').value === 'true'
+  };
+  saveToStorage();
+  toast('✅ Sonntags-Special gespeichert!');
+}
+
+// ---- MENU TAB ----
+function renderDishList() {
+  var list = document.getElementById('dish-list');
+  list.innerHTML = (data.menu || []).map((d, i) => `
+    <div class="dish-row" id="dish-${i}">
+      <input type="text" value="${esc(d.name)}" placeholder="Gerichtname" oninput="data.menu[${i}].name=this.value">
+      <input type="text" value="${esc(d.desc||'')}" placeholder="Beilage / Beschreibung" oninput="data.menu[${i}].desc=this.value">
+      <input type="text" value="${esc(d.price)}" placeholder="Preis" style="max-width:90px" oninput="data.menu[${i}].price=this.value">
+      <button class="btn-delete" onclick="removeDish(${i})">✕</button>
+    </div>`).join('');
+}
+function addDish() {
+  if (!data.menu) data.menu = [];
+  data.menu.push({ name: '', desc: '', price: '' });
+  renderDishList();
+  // focus last
+  var rows = document.querySelectorAll('.dish-row input');
+  if (rows.length) rows[rows.length - 3].focus();
+}
+function removeDish(i) {
+  data.menu.splice(i, 1);
+  renderDishList();
+}
+function saveMenu() {
+  saveToStorage();
+  toast('✅ Speisekarte gespeichert!');
+}
+
+// ---- HOURS TAB ----
+function renderHoursList() {
+  var list = document.getElementById('hours-list');
+  list.innerHTML = (data.hours || []).map((h, i) => `
+    <div class="admin-card">
+      <h3>Zeitraum ${i+1}</h3>
+      <div class="field-group"><label>Label (z.B. "Do – Sa")</label>
+        <input type="text" value="${esc(h.label)}" oninput="data.hours[${i}].label=this.value"></div>
+      <div class="field-group"><label>Tage (ausgeschrieben)</label>
+        <input type="text" value="${esc(h.days)}" oninput="data.hours[${i}].days=this.value"></div>
+      <div class="field-group"><label>Uhrzeit</label>
+        <input type="text" value="${esc(h.time)}" oninput="data.hours[${i}].time=this.value"></div>
+      <div class="field-group"><label>Hinweis (optional)</label>
+        <input type="text" value="${esc(h.note||'')}" oninput="data.hours[${i}].note=this.value"></div>
+    </div>`).join('');
+}
+function saveHours() {
+  saveToStorage();
+  toast('✅ Öffnungszeiten gespeichert!');
+}
+
+// ---- NEWS TAB ----
+function renderNewsList() {
+  var list = document.getElementById('news-list');
+  list.innerHTML = (data.news || []).map((n, i) => `
+    <div class="admin-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem">
+        <h3>Beitrag ${i+1}</h3>
+        <button class="btn-delete" onclick="removeNews(${i})">✕ Löschen</button>
+      </div>
+      <div class="field-group"><label>Datum</label>
+        <input type="text" value="${esc(n.date)}" placeholder="z.B. Juni 2025" oninput="data.news[${i}].date=this.value"></div>
+      <div class="field-group"><label>Titel</label>
+        <input type="text" value="${esc(n.title)}" oninput="data.news[${i}].title=this.value"></div>
+      <div class="field-group"><label>Text</label>
+        <textarea oninput="data.news[${i}].text=this.value">${esc(n.text)}</textarea></div>
+      <div class="field-group"><label>Bild-URL (optional)</label>
+        <input type="url" value="${esc(n.img||'')}" placeholder="https://..." oninput="data.news[${i}].img=this.value"></div>
+    </div>`).join('');
+}
+function addNews() {
+  if (!data.news) data.news = [];
+  data.news.unshift({ date: '', title: '', text: '', img: '' });
+  renderNewsList();
+}
+function removeNews(i) {
+  data.news.splice(i, 1);
+  renderNewsList();
+}
+function saveNews() {
+  saveToStorage();
+  toast('✅ Aktuelles gespeichert!');
+}
+
+// ---- CONTACT TAB ----
+function saveContact() {
+  data.contact = {
+    name:    document.getElementById('c-name').value,
+    address: document.getElementById('c-address').value,
+    tel:     document.getElementById('c-tel').value,
+    mobile:  document.getElementById('c-mobile').value,
+    email:   document.getElementById('c-email').value
+  };
+  saveToStorage();
+  toast('✅ Kontaktdaten gespeichert!');
+}
+
+// ---- EXPORT ----
+function generateDataJs() {
+  return `// ============================================================
+//  LANDGASTHOF OSTERMÜNCHEN — data.js
+//  Automatisch generiert von der Admin-App
+//  Zuletzt geändert: ${new Date().toLocaleString('de-DE')}
+// ============================================================
+
+var LG_DATA = ${JSON.stringify(data, null, 2)};
+
+// Make available globally
+if (typeof window !== 'undefined') {
+  if (typeof window.applyContent === 'function') {
+    window.applyContent(LG_DATA);
+  }
+}
+`;
+}
+
+function updateExportPreview() {
+  if (!data) return;
+  document.getElementById('export-preview').value = generateDataJs();
+}
+
+function exportData() {
+  var content = generateDataJs();
+  var blob = new Blob([content], { type: 'application/javascript' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.js';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ data.js heruntergeladen!');
+}
+
+function copyExport() {
+  var ta = document.getElementById('export-preview');
+  ta.select();
+  try {
+    navigator.clipboard.writeText(ta.value).then(() => toast('📋 Kopiert!'));
+  } catch(e) {
+    document.execCommand('copy');
+    toast('📋 Kopiert!');
+  }
+}
+
+// ---- UTILS ----
+function esc(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// Init
+if (sessionStorage.getItem('lg_admin') === '1') {
+  loadData();
+}
+</script>
+</body>
+</html>

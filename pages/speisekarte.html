@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Speisekarte – Landgasthof Ostermünchen</title>
+  <meta name="description" content="Tageskarte und Speisekarte des Landgasthof Ostermünchen – frische bayerische Küche mit regionalen Zutaten.">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/6dd4bbd1-c9c8-4360-bef3-84542acfd8bf/image-384x229.png" alt="Logo">
+      <div class="logo-text">Landgasthof Ostermünchen<span>Gut bürgerliche Küche</span></div>
+    </a>
+    <button class="nav-toggle" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="main-nav">
+      <li><a href="../index.html">Start</a></li>
+      <li><a href="speisekarte.html">Speisekarte</a></li>
+      <li><a href="raeume.html">Räume</a></li>
+      <li><a href="aktuelles.html">Aktuelles</a></li>
+      <li><a href="kontakt.html">Kontakt</a></li>
+      <li><a href="do-samma.html">Do samma</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Tageskarte</h1>
+    <p class="sub">Frisch · Regional · Saisonal</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <h2>Aktuelle Gerichte</h2>
+    <p style="color:var(--muted); margin-bottom:0">Unsere Speisekarte wechselt saisonal. Alle Gerichte werden frisch zubereitet.</p>
+    <div class="tages-grid" id="menu-data">
+      <!-- Fallback, wird durch data.js überschrieben -->
+      <div class="dish-card">
+        <div>
+          <div class="dish-name">Bärlauch-Cremesuppe</div>
+          <div class="dish-desc">klein / groß</div>
+        </div>
+        <div class="dish-price">4,80 € / 7,80 €</div>
+      </div>
+      <div class="dish-card">
+        <div>
+          <div class="dish-name">Gebratenes Zanderfilet</div>
+          <div class="dish-desc">mit Bärlauch-Risotto</div>
+        </div>
+        <div class="dish-price">18,80 €</div>
+      </div>
+      <div class="dish-card">
+        <div>
+          <div class="dish-name">Schweinefilet im Speckmantel</div>
+          <div class="dish-desc">mit Bärlauch-Spätzle und Rahmsoße</div>
+        </div>
+        <div class="dish-price">18,80 €</div>
+      </div>
+      <div class="dish-card">
+        <div>
+          <div class="dish-name">Schweinelende in Gorgonzolasoße</div>
+          <div class="dish-desc">mit Bandnudeln</div>
+        </div>
+        <div class="dish-price">16,80 €</div>
+      </div>
+      <div class="dish-card">
+        <div>
+          <div class="dish-name">Rindertafelspitz</div>
+          <div class="dish-desc">mit Meerrettichsoße und Salzkartoffeln</div>
+        </div>
+        <div class="dish-price">17,80 €</div>
+      </div>
+    </div>
+
+    <!-- Sonntags-Spezial -->
+    <div class="sunday-special" id="sunday-box" style="margin-top:2rem">
+      <div class="sun-icon">☀️</div>
+      <div>
+        <h3 id="sunday-name">Sonntags-Braten</h3>
+        <p id="sunday-desc">Schweinebraten mit Semmelknödel und Dunkelbiersoße</p>
+      </div>
+      <div style="margin-left:auto">
+        <span style="font-size:1.6rem; font-weight:800" id="sunday-price">13,80 €</span>
+      </div>
+    </div>
+
+    <div class="supplier-note">
+      <strong>Unsere Fleischspezialitäten</strong> beziehen wir vorwiegend von der
+      <a href="https://metzgerei-gigglinger.de" target="_blank" rel="noopener">Metzgerei Gigglinger</a>.
+      Ausgewählte Gerichte bereiten wir mit Fleisch von der
+      <a href="https://bio-hof-metzger.de" target="_blank" rel="noopener">Bio-Metzgerei Bartl</a> zu.
+    </div>
+  </div>
+</section>
+
+<section class="section section--alt">
+  <div class="container" style="text-align:center">
+    <h2>Speisekarte als PDF</h2>
+    <p style="color:var(--muted)">Die vollständige Speisekarte mit allen Gerichten und Getränken</p>
+    <div class="speisekarte-pdf-row" style="justify-content:center; margin-top:1.25rem">
+      <a href="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/465c0014-1bcf-4cf7-b73e-de506a75e6ba/image.jpg" target="_blank" class="btn btn--primary">📄 Speisekarte Seite 1</a>
+      <a href="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/9663b2f5-1fab-4151-b109-4d09ce156550/image.jpg" target="_blank" class="btn btn--green">📄 Speisekarte Seite 2</a>
+      <a href="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/3fbd9106-5948-4d37-9cfb-e78d0c64901d/image.jpg" target="_blank" class="btn btn--green">📄 Speisekarte Seite 3</a>
+    </div>
+    <p style="margin-top:1.5rem; color:var(--muted); font-size:.9rem">
+      Reservierungen bitte nur telefonisch:
+      <a href="tel:+4980678815600" style="color:var(--green); font-weight:700">08067 / 8815600</a>
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container" style="text-align:center">
+    <a href="kontakt.html" class="btn btn--primary" style="font-size:1.05rem">Jetzt einen Tisch reservieren</a>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4>Adresse</h4>
+        <p>Rotter Straße 2, 83104 Tuntenhausen</p>
+      </div>
+      <div class="footer-col">
+        <h4>Kontakt</h4>
+        <p>📞 <a href="tel:+4980678815600">08067 / 8815600</a></p>
+        <p>✉️ <a href="mailto:wirt@landgasthof-ostermuenchen.de">wirt@landgasthof-ostermuenchen.de</a></p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="../index.html">Startseite</a>
+        <a href="raeume.html">Räume</a>
+        <a href="aktuelles.html">Aktuelles</a>
+        <a href="kontakt.html">Kontakt</a>
+      </div>
+      <div class="footer-col">
+        <h4>Rechtliches</h4>
+        <a href="impressum.html">Impressum</a>
+        <a href="datenschutz.html">Datenschutzerklärung</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Landgasthof Ostermünchen</span>
+    </div>
+  </div>
+</footer>
+
+<script src="../js/shared.js"></script>
+<script src="../js/data.js"></script>
+<script>
+  if (typeof LG_DATA !== 'undefined') {
+    if (LG_DATA.menu) {
+      document.getElementById('menu-data').innerHTML = LG_DATA.menu.map(item => `
+        <div class="dish-card">
+          <div>
+            <div class="dish-name">${item.name}</div>
+            ${item.desc ? `<div class="dish-desc">${item.desc}</div>` : ''}
+          </div>
+          <div class="dish-price">${item.price}</div>
+        </div>`).join('');
+    }
+    if (LG_DATA.sundaySpecial) {
+      document.getElementById('sunday-name').textContent = LG_DATA.sundaySpecial.name;
+      document.getElementById('sunday-desc').textContent = LG_DATA.sundaySpecial.desc;
+      document.getElementById('sunday-price').textContent = LG_DATA.sundaySpecial.price;
+      document.getElementById('sunday-box').style.display = LG_DATA.sundaySpecial.active ? '' : 'none';
+    }
+  }
+</script>
+</body>
+</html>

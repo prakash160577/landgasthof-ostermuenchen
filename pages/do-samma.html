@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Do samma – Landgasthof Ostermünchen</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <a href="../index.html" class="logo">
+      <img src="https://landgasthof-ostermuenchen.de/wp-content/uploads/go-x/u/6dd4bbd1-c9c8-4360-bef3-84542acfd8bf/image-384x229.png" alt="Logo">
+      <div class="logo-text">Landgasthof Ostermünchen<span>Gut bürgerliche Küche</span></div>
+    </a>
+    <button class="nav-toggle" aria-label="Menü" aria-expanded="false"><span></span><span></span><span></span></button>
+    <ul class="main-nav">
+      <li><a href="../index.html">Start</a></li>
+      <li><a href="speisekarte.html">Speisekarte</a></li>
+      <li><a href="raeume.html">Räume</a></li>
+      <li><a href="aktuelles.html">Aktuelles</a></li>
+      <li><a href="kontakt.html">Kontakt</a></li>
+      <li><a href="do-samma.html">Do samma</a></li>
+    </ul>
+  </div>
+</header>
+
+<div class="page-header">
+  <div class="container">
+    <h1>Do samma!</h1>
+    <p class="sub">So findet ihr uns – Wegbeschreibung</p>
+  </div>
+</div>
+
+<section class="section">
+  <div class="container">
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:2.5rem; align-items:start;">
+      <div>
+        <h2 style="margin-bottom:1.25rem">Landgasthof Ostermünchen</h2>
+        <div style="background:var(--linen); border-radius:var(--radius); padding:1.5rem; margin-bottom:1.5rem">
+          <p><strong>📍 Adresse</strong><br>
+          Rotter Straße 2<br>
+          83104 Tuntenhausen (Ostermünchen)</p>
+        </div>
+        <p style="color:var(--muted)">
+          Schöner Landgasthof mitten in Ostermünchen, neben der Kirche, umringt von Bauernhöfen. Gut erreichbar aus Rosenheim, Wasserburg am Inn und München.
+        </p>
+        <div style="margin-top:1.5rem; display:flex; flex-direction:column; gap:.75rem">
+          <a href="https://www.google.com/maps/dir/?api=1&destination=Rotter+Straße+2,+83104+Tuntenhausen"
+             target="_blank" rel="noopener" class="btn btn--primary">
+            🗺 In Google Maps öffnen
+          </a>
+          <a href="https://maps.apple.com/?address=Rotter+Stra%C3%9Fe+2,+83104+Tuntenhausen"
+             target="_blank" rel="noopener" class="btn btn--green">
+            🍎 In Apple Maps öffnen
+          </a>
+          <a href="tel:+4980678815600" class="btn btn--outline" style="border-color:var(--green); color:var(--green)">
+            📞 Anrufen: 08067 / 8815600
+          </a>
+        </div>
+      </div>
+      <div>
+        <div class="map-full">
+          <iframe
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2668.0!2d12.0671!3d47.9012!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47770b1a5ba4b8d5%3A0x1234!2sRotter+Stra%C3%9Fe+2%2C+83104+Tuntenhausen!5e0!3m2!1sde!2sde!4v1600000000000!5m2!1sde!2sde"
+            allowfullscreen=""
+            loading="lazy"
+            referrerpolicy="no-referrer-when-downgrade"
+            title="Karte Landgasthof">
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-col"><h4>Adresse</h4><p>Rotter Straße 2, 83104 Tuntenhausen</p></div>
+      <div class="footer-col"><h4>Kontakt</h4><p>📞 <a href="tel:+4980678815600">08067 / 8815600</a></p></div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <a href="../index.html">Startseite</a>
+        <a href="speisekarte.html">Speisekarte</a>
+        <a href="kontakt.html">Kontakt</a>
+      </div>
+      <div class="footer-col"><h4>Rechtliches</h4><a href="impressum.html">Impressum</a><a href="datenschutz.html">Datenschutz</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 Landgasthof Ostermünchen</span></div>
+  </div>
+</footer>
+
+<script src="../js/shared.js"></script>
+
+<style>
+@media (max-width: 700px) {
+  .container > div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  .map-full { height: 280px !important; }
+}
+</style>
+</body>
+</html>
