@@ -52,6 +52,8 @@ html,body{background:var(--web-bg);color:var(--text);font-family:var(--schrift);
 
 .stage{padding:16px 12px 60px}
 body.einbettung .ui{display:none}
+body.imrahmen .ui{position:static;background:transparent;border:0;padding:10px 12px 0}
+body.imrahmen #btnModus, body.imrahmen #btnFit{display:none}
 body.einbettung .stage{padding:0 0 8px}
 body.einbettung .deckblatt{display:none}
 body.einbettung .blatt{box-shadow:none;margin-bottom:10px;border-bottom:1px solid #e2dcdd}
@@ -148,6 +150,24 @@ body.a4 .rahmen{
 .zierlinie{display:flex;align-items:center;justify-content:center;gap:.5em;margin:-.2em 0 .45em}
 .zierlinie .li{width:18%;height:1px;background:currentColor;opacity:.35}
 .zierlinie svg{width:1.4em;height:auto;flex:0 0 auto;opacity:.6}
+
+/* ---------- Schmale Bildschirme: Umbruch statt Überlauf ---------- */
+@media screen and (max-width:620px){
+  body.web .blatt{padding-left:14px;padding-right:14px;overflow-x:hidden}
+  body.web .gr{grid-template-columns:1fr max-content;column-gap:.8em}
+  body.web .gr .gm{grid-column:2;text-align:right;font-size:.9em;opacity:.75}
+  body.web .gr .gp{grid-column:2;text-align:right}
+  body.web .gr.wein{grid-template-columns:1fr max-content}
+  body.web .gr.wein .gp.lang{
+    grid-column:1/-1;text-align:left;white-space:normal;
+    font-size:.92em;opacity:.85;margin:-.4em 0 .3em
+  }
+  body.web .gr.wein .tr{margin:0 .35em}
+  body.web .e .p{white-space:normal}
+  body.web .e .p .pz{white-space:nowrap}
+  body.web .zw{column-count:1}
+  body.web .notiz{font-size:.75em}
+}
 
 /* ---------- A4-Vorschau ---------- */
 body.a4 .stage{padding:14px 6px 60px}
@@ -596,6 +616,7 @@ window.SPEISEKARTE = {
 
   var eingebettet = /(^|[?&])einbettung(=|&|$)/.test(location.search) || window.EINBETTUNG === 1;
   if(eingebettet) document.body.classList.add('einbettung');
+  if(window.parent !== window) document.body.classList.add('imrahmen');
 
   var D = window.SPEISEKARTE;
   var ziel = document.getElementById('karte');
@@ -700,7 +721,7 @@ window.SPEISEKARTE = {
       h += '<span class="gn"><span class="n">' + esc(g.name) + '</span>'
          + (g.notiz ? '<span class="notiz">' + esc(g.notiz) + '</span>' : '') + '</span>';
       var vs = (g.varianten && g.varianten.length) ? g.varianten : [{ menge: '', preis: g.preis }];
-      h += '<span class="gp">' + vs.map(function(v){
+      h += '<span class="gp' + (vs.length > 1 ? ' lang' : '') + '">' + vs.map(function(v){
              return (v.menge ? esc(v.menge) + ' ' : '') + preis(v.preis);
            }).join('<span class="tr">·</span>') + '</span>';
     });
