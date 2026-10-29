@@ -7,10 +7,9 @@ Design, Texte, Bilder und Schriften sind direkt aus der Live-Seite übernommen.
 
 | Ort | Inhalt |
 |---|---|
-| `neu/` | **Neue Website (Vorschau)** – https://prakash160577.github.io/landgasthof-ostermuenchen/neu/ |
+| Stamm | **Live-Website** – https://landgasthof-ostermuenchen.de |
 | Zweig `alt-version` | Gesicherter früherer GitHub-Nachbau |
-| Stamm (`index.html`, `pages/`, `js/`, `admin/` …) | Früherer GitHub-Nachbau, wird beim Umzug durch `neu/` ersetzt |
-| `speisekarte-ohne-deckblatt.html` | Speisekarte; wird von der Speisekarten-Seite eingebettet (auch von der STRATO-Seite) |
+| `speisekarte-ohne-deckblatt.html` | Speisekarte; wird von der Speisekarten-Seite eingebettet |
 
 ## Tageskarte austauschen
 
@@ -27,7 +26,7 @@ damit Besucher sofort die neue Karte sehen. Die Tageskarte erscheint auf
 ## Aufbau
 
 ```
-neu/
+(Stamm)
 ├── index.html                  Startseite
 ├── speisekarte/ raeume/ aktuelles/ kontakt/ do-samma/ impressum/ datenschutzerklarung/
 ├── tageskarte/tageskarte.jpg   aktuelle Tageskarte
@@ -40,6 +39,6 @@ tools/
 
 Texte ändern: direkt in der jeweiligen `index.html` (Text steht im HTML).
 
-## Umzug der Domain (erst nach Freigabe)
+## Domain
 
-Siehe `UMZUG.md`.
+DNS-Einstellungen und Rückweg: siehe `UMZUG.md`.
