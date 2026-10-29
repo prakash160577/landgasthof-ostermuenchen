@@ -1,1 +1,10 @@
 /* Landgasthof Ostermünchen – eigene Ergänzungen zum STRATO-Design */
+
+/* Über die Verwaltungsseite eingefügte Texte und Bilder */
+.vw-text{max-width:720px;margin:32px auto;padding:0 16px;text-align:center;
+  font-family:Nunito,Arial,sans-serif;font-size:18px;line-height:1.5;color:#303030}
+.vw-text p{margin:0 0 .6em}
+.vw-text strong{font-weight:700}
+.vw-text a{color:#60233a}
+.vw-bild{margin:24px auto;padding:0 16px;text-align:center}
+.vw-bild img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto}

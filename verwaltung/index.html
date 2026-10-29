@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#E8E3E4">
+<title>Homepage-Verwaltung</title>
+<style>
+:root{
+  --bg:#E8E3E4; --karte:#ffffff; --text:#202020; --leise:#6b6466;
+  --akzent:#60233a; --akzent-hell:#f3e9ec; --rand:#d8cfd2; --gut:#2f6b3a; --warn:#9a3b0f;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);
+  font:17px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:16px 16px calc(24px + env(safe-area-inset-bottom))}
+.wrap{max-width:720px;margin:0 auto}
+header{display:flex;align-items:center;gap:12px;margin:4px 0 16px}
+header img{height:52px;width:auto}
+header h1{font-size:20px;margin:0;line-height:1.2}
+header small{display:block;color:var(--leise);font-size:14px;font-weight:400}
+.karte{background:var(--karte);border-radius:var(--radius);padding:16px;margin-bottom:14px;
+  box-shadow:0 1px 3px rgba(0,0,0,.06)}
+h2{font-size:17px;margin:0 0 10px}
+label{display:block;font-weight:600;margin-bottom:6px}
+textarea,input[type=password],input[type=tel]{width:100%;font:inherit;border:1.5px solid var(--rand);
+  border-radius:10px;padding:12px;background:#fff;color:var(--text)}
+textarea{min-height:120px;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:var(--akzent)}
+button{font:inherit;font-weight:600;border:0;border-radius:12px;padding:14px 16px;cursor:pointer;
+  min-height:50px;touch-action:manipulation}
+button:disabled{opacity:.5;cursor:default}
+.haupt{background:var(--akzent);color:#fff;width:100%}
+.zweit{background:var(--akzent-hell);color:var(--akzent)}
+.leise{background:transparent;color:var(--leise);text-decoration:underline;min-height:auto;padding:8px}
+.reihe{display:flex;gap:10px;flex-wrap:wrap}
+.reihe>*{flex:1 1 0;min-width:0}
+.mic{display:flex;align-items:center;justify-content:center;gap:8px}
+.mic.an{background:#c62828;color:#fff;animation:puls 1.2s infinite}
+@keyframes puls{50%{opacity:.75}}
+.fotos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.foto{position:relative;width:84px;height:84px;border-radius:10px;overflow:hidden;border:1px solid var(--rand)}
+.foto img{width:100%;height:100%;object-fit:cover}
+.foto button{position:absolute;top:2px;right:2px;min-height:auto;width:28px;height:28px;padding:0;border-radius:50%;
+  background:rgba(255,255,255,.92);color:#000;font-size:18px;line-height:28px}
+.hinweis{color:var(--leise);font-size:14px;margin:8px 0 0}
+.status{font-size:14px;color:var(--leise)}
+.meldung{border-radius:12px;padding:12px 14px;margin-bottom:14px;font-weight:500}
+.meldung.ok{background:#e6f2e8;color:var(--gut)}
+.meldung.fehler{background:#fbe9e3;color:var(--warn)}
+.meldung.frage{background:#fff5d6;color:#6b4e00}
+.laden{display:flex;align-items:center;gap:12px;color:var(--leise)}
+.kreis{width:22px;height:22px;border:3px solid var(--rand);border-top-color:var(--akzent);border-radius:50%;
+  animation:dreh 1s linear infinite;flex:none}
+@keyframes dreh{to{transform:rotate(360deg)}}
+ul.liste{margin:8px 0 0;padding-left:20px}
+ul.liste li{margin:4px 0}
+.alt{color:var(--leise);text-decoration:line-through}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.tabs button{min-height:40px;padding:8px 12px;font-size:15px;background:var(--akzent-hell);color:var(--akzent)}
+.tabs button.aktiv{background:var(--akzent);color:#fff}
+.vorschau{width:100%;height:70vh;border:1px solid var(--rand);border-radius:10px;background:#fff}
+.versteckt{display:none!important}
+.pin{max-width:360px;margin:12vh auto 0}
+.pin input{font-size:24px;letter-spacing:6px;text-align:center}
+a{color:var(--akzent)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="../wp-content/uploads/go-x/u/6dd4bbd1-c9c8-4360-bef3-84542acfd8bf/image-384x229.png" alt="">
+    <h1>Homepage-Verwaltung<small>Landgasthof Ostermünchen</small></h1>
+  </header>
+
+  <!-- Anmeldung -->
+  <section id="anmeldung" class="karte pin">
+    <h2>Anmelden</h2>
+    <label for="pin">PIN</label>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" maxlength="12">
+    <div style="height:12px"></div>
+    <button id="btnAnmelden" class="haupt">Anmelden</button>
+    <div id="anmeldeMeldung"></div>
+  </section>
+
+  <!-- Arbeitsbereich -->
+  <section id="arbeit" class="versteckt">
+    <div id="meldung"></div>
+
+    <div class="karte" id="eingabe">
+      <label for="anweisung">Was soll auf der Homepage geändert werden?</label>
+      <textarea id="anweisung" placeholder="z. B. „Neue Tageskarte“ und Foto anhängen – oder „Am Montag, 3. November, haben wir geschlossen“"></textarea>
+      <div style="height:10px"></div>
+      <div class="reihe">
+        <button id="btnMic" class="zweit mic" type="button">🎤 Sprechen</button>
+        <button id="btnFoto" class="zweit" type="button">📷 Foto</button>
+      </div>
+      <input id="fotoDatei" type="file" accept="image/*" multiple class="versteckt">
+      <div id="fotos" class="fotos"></div>
+      <div style="height:12px"></div>
+      <button id="btnVorschlag" class="haupt">Änderung vorbereiten</button>
+      <p class="hinweis">Nichts wird sofort veröffentlicht. Du siehst zuerst eine Vorschau.</p>
+    </div>
+
+    <div class="karte versteckt" id="arbeitet">
+      <div class="laden"><div class="kreis"></div><span id="arbeitetText">Claude bereitet die Änderung vor …</span></div>
+    </div>
+
+    <div class="karte versteckt" id="ergebnis">
+      <h2>Vorschau</h2>
+      <p id="zusammenfassung" style="margin:0"></p>
+      <ul class="liste" id="liste"></ul>
+      <div class="tabs" id="tabs"></div>
+      <iframe id="vorschau" class="vorschau" title="Vorschau" sandbox="allow-same-origin allow-scripts"></iframe>
+      <div style="height:12px"></div>
+      <button id="btnVeroeffentlichen" class="haupt">✅ Veröffentlichen</button>
+      <div style="height:8px"></div>
+      <div class="reihe">
+        <button id="btnNachbessern" class="zweit">Nachbessern</button>
+        <button id="btnVerwerfen" class="zweit">Verwerfen</button>
+      </div>
+    </div>
+
+    <div class="karte">
+      <div class="status" id="status">–</div>
+      <div class="reihe" style="margin-top:8px">
+        <button id="btnRueckgaengig" class="zweit" disabled>↩︎ Letzte Änderung rückgängig</button>
+      </div>
+      <div class="reihe" style="margin-top:4px">
+        <a href="../" target="_blank" rel="noopener" style="flex:1;padding:8px 0">Homepage ansehen</a>
+        <button id="btnAbmelden" class="leise" style="flex:0 0 auto">Abmelden</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------ Einstellungen */
+  var BACKEND = '';   // Web-App-Adresse des Google Apps Script (…/exec)
+  try { var q = new URLSearchParams(location.search).get('backend'); if (q) BACKEND = q; } catch (e) {}
+
+  var SEITEN = [
+    { datei: 'index.html',              titel: 'Startseite' },
+    { datei: 'speisekarte/index.html',  titel: 'Speisekarte (Seite)' },
+    { datei: 'raeume/index.html',       titel: 'Räume' },
+    { datei: 'aktuelles/index.html',    titel: 'Aktuelles' },
+    { datei: 'kontakt/index.html',      titel: 'Kontakt' },
+    { datei: 'do-samma/index.html',     titel: 'Do samma (Anfahrt)' }
+  ];
+  var KARTE = 'speisekarte-ohne-deckblatt.html';
+  var SITE = new URL('../', location.href).href;   // Wurzel der Homepage
+
+  /* ------------------------------------------------------------ Zustand */
+  var pin = '';
+  var stand = null;      // { sha, dateien: {pfad: text}, status }
+  var fotos = [];        // { gross: dataURL, klein: base64, breite, hoehe }
+  var plan = null;       // vorbereitete Änderung
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ------------------------------------------------------------ Hilfen */
+  function zeige(id, an) { $(id).classList.toggle('versteckt', !an); }
+  function meldung(ziel, art, text) {
+    $(ziel).innerHTML = text ? '<div class="meldung ' + art + '">' + esc(text) + '</div>' : '';
+  }
+  function esc(s) {
+    return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
+  }
+  function speichern(k, v) { try { v === null ? sessionStorage.removeItem(k) : sessionStorage.setItem(k, v); } catch (e) {} }
+  function laden(k) { try { return sessionStorage.getItem(k); } catch (e) { return null; } }
+  function heute() { var d = new Date(); return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear(); }
+  function zeitstempel() { var d = new Date(); return d.getFullYear() + ('0' + (d.getMonth() + 1)).slice(-2) + ('0' + d.getDate()).slice(-2) + '-' + ('0' + d.getHours()).slice(-2) + ('0' + d.getMinutes()).slice(-2) + ('0' + d.getSeconds()).slice(-2); }
+  function tiefe(pfad) { return pfad.split('/').length - 1; }
+  function praefix(pfad) { return new Array(tiefe(pfad) + 1).join('../'); }
+  function ordner(pfad) { var i = pfad.lastIndexOf('/'); return i < 0 ? '' : pfad.slice(0, i + 1); }
+  function seitenTitel(pfad) { var s = SEITEN.filter(function (x) { return x.datei === pfad; })[0]; return s ? s.titel : (pfad === KARTE ? 'Speisekarte' : pfad); }
+  function kurz(t, n) { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; }
+  function nurText(html) { var d = document.createElement('div'); d.innerHTML = html; return d.textContent; }
+
+  function anfrage(aktion, daten) {
+    if (!BACKEND) return Promise.reject(new Error('Die Verwaltung ist noch nicht fertig eingerichtet (Backend-Adresse fehlt).'));
+    var body = Object.assign({ aktion: aktion, pin: pin }, daten || {});
+    return fetch(BACKEND, { method: 'POST', body: JSON.stringify(body) })
+      .then(function (r) { if (!r.ok) throw new Error('Verbindung fehlgeschlagen (' + r.status + ').'); return r.json(); })
+      .then(function (j) { if (!j.ok) throw new Error(j.fehler || 'Unbekannter Fehler.'); return j; });
+  }
+
+  /* ------------------------------------------------------------ Anmeldung */
+  function anmelden(p) {
+    pin = p;
+    $('btnAnmelden').disabled = true;
+    meldung('anmeldeMeldung', '', '');
+    return anfrage('dateien').then(function (j) {
+      stand = j;
+      speichern('vw_pin', pin);
+      zeige('anmeldung', false); zeige('arbeit', true);
+      zeigeStatus(j.status);
+    }).catch(function (e) {
+      speichern('vw_pin', null);
+      meldung('anmeldeMeldung', 'fehler', e.message);
+    }).then(function () { $('btnAnmelden').disabled = false; });
+  }
+  $('btnAnmelden').onclick = function () { var p = $('pin').value.trim(); if (p) anmelden(p); };
+  $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('btnAnmelden').click(); });
+  $('btnAbmelden').onclick = function () { speichern('vw_pin', null); location.reload(); };
+
+  function zeigeStatus(s) {
+    if (!s) return;
+    var d = new Date(s.letztesDatum);
+    var text = s.letzteNachricht.replace(/^\[Verwaltung\]\s*/, '');
+    $('status').textContent = 'Letzte Änderung: ' + kurz(text, 90) + ' (' + d.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) + ')';
+    $('btnRueckgaengig').disabled = !s.rueckgaengigMoeglich;
+  }
+
+  /* ------------------------------------------------------------ Spracheingabe */
+  var Erkennung = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var erk = null, hoert = false, basisText = '';
+  if (!Erkennung) {
+    $('btnMic').onclick = function () {
+      meldung('meldung', 'frage', 'Spracheingabe geht in diesem Browser nicht. Tipp: Auf der Handy-Tastatur das Mikrofon-Symbol benutzen.');
+      $('anweisung').focus();
+    };
+  } else {
+    $('btnMic').onclick = function () { hoert ? stopp() : start(); };
+  }
+  function start() {
+    erk = new Erkennung();
+    erk.lang = 'de-DE'; erk.continuous = true; erk.interimResults = true;
+    basisText = $('anweisung').value ? $('anweisung').value.replace(/\s*$/, ' ') : '';
+    erk.onresult = function (ev) {
+      var fertig = '', zwischen = '';
+      for (var i = 0; i < ev.results.length; i++) {
+        (ev.results[i].isFinal ? (fertig += ev.results[i][0].transcript) : (zwischen += ev.results[i][0].transcript));
+      }
+      $('anweisung').value = basisText + fertig + zwischen;
+    };
+    erk.onerror = function (ev) {
+      if (ev.error === 'not-allowed') meldung('meldung', 'fehler', 'Bitte den Zugriff aufs Mikrofon erlauben.');
+      stopp();
+    };
+    erk.onend = function () { if (hoert) { basisText = $('anweisung').value.replace(/\s*$/, ' '); try { erk.start(); } catch (e) { stopp(); } } };
+    hoert = true; $('btnMic').classList.add('an'); $('btnMic').textContent = '⏹ Fertig';
+    try { erk.start(); } catch (e) { stopp(); }
+  }
+  function stopp() {
+    hoert = false; $('btnMic').classList.remove('an'); $('btnMic').textContent = '🎤 Sprechen';
+    try { erk && erk.stop(); } catch (e) {}
+  }
+
+  /* ------------------------------------------------------------ Fotos */
+  $('btnFoto').onclick = function () { $('fotoDatei').click(); };
+  $('fotoDatei').onchange = function () {
+    var dateien = Array.prototype.slice.call(this.files || []);
+    this.value = '';
+    Promise.all(dateien.slice(0, 4 - fotos.length).map(verkleinern)).then(function (neu) {
+      fotos = fotos.concat(neu); zeigeFotos();
+    }).catch(function () { meldung('meldung', 'fehler', 'Das Foto konnte nicht gelesen werden.'); });
+  };
+  function verkleinern(datei) {
+    return new Promise(function (ok, nein) {
+      var url = URL.createObjectURL(datei), img = new Image();
+      img.onload = function () {
+        var grossB = Math.min(1600, img.naturalWidth), f = grossB / img.naturalWidth;
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var gross = c.toDataURL('image/jpeg', 0.86);
+        var kb = Math.min(1024, c.width) / c.width, k = document.createElement('canvas');
+        k.width = Math.round(c.width * kb); k.height = Math.round(c.height * kb);
+        k.getContext('2d').drawImage(c, 0, 0, k.width, k.height);
+        URL.revokeObjectURL(url);
+        ok({ gross: gross, klein: k.toDataURL('image/jpeg', 0.8).split(',')[1], breite: c.width, hoehe: c.height });
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); nein(); };
+      img.src = url;
+    });
+  }
+  function zeigeFotos() {
+    $('fotos').innerHTML = fotos.map(function (f, i) {
+      return '<div class="foto"><img src="' + f.gross + '" alt="Foto ' + (i + 1) + '"><button data-i="' + i + '" aria-label="Foto entfernen">×</button></div>';
+    }).join('');
+    Array.prototype.forEach.call($('fotos').querySelectorAll('button'), function (b) {
+      b.onclick = function () { fotos.splice(Number(b.dataset.i), 1); zeigeFotos(); };
+    });
+  }
+
+  /* ------------------------------------------------------------ Inhalt erfassen */
+  var SEG_SEL = 'h1,h2,h3,h4,h5,h6,p,li,a[class*="button"]';
+  function bereinigt(t) { return String(t || '').replace(/[​ ]/g, ' ').replace(/\s+/g, ' ').trim(); }
+
+  function parse(pfad) {
+    var text = stand.dateien[pfad];
+    var doc = new DOMParser().parseFromString(text, 'text/html');
+    var main = doc.querySelector('main') || doc.body;
+    var segs = Array.prototype.filter.call(main.querySelectorAll(SEG_SEL), function (el) {
+      if (!bereinigt(el.textContent)) return false;
+      var innen = Array.prototype.some.call(el.querySelectorAll(SEG_SEL), function (k) { return bereinigt(k.textContent); });
+      return !innen;
+    });
+    var bilder = Array.prototype.slice.call(main.querySelectorAll('img'));
+    return { pfad: pfad, doc: doc, segs: segs, bilder: bilder, doctype: text.slice(0, text.search(/<html[\s>]/i)) };
+  }
+
+  // Inhalt eines Elements in eingeschränktem HTML (br, strong, em, a)
+  function eingeschraenkt(knoten) {
+    var out = '';
+    Array.prototype.forEach.call(knoten.childNodes, function (n) {
+      if (n.nodeType === 3) { out += esc(n.nodeValue.replace(/​/g, '')); return; }
+      if (n.nodeType !== 1) return;
+      var t = n.tagName;
+      if (t === 'BR') out += '<br>';
+      else if (t === 'STRONG' || t === 'B') out += '<strong>' + eingeschraenkt(n) + '</strong>';
+      else if (t === 'EM' || t === 'I') out += '<em>' + eingeschraenkt(n) + '</em>';
+      else if (t === 'A' && n.getAttribute('href')) out += '<a href="' + esc(n.getAttribute('href')) + '">' + eingeschraenkt(n) + '</a>';
+      else if (t !== 'SCRIPT' && t !== 'STYLE') out += eingeschraenkt(n);
+    });
+    return out.replace(/\s+/g, ' ').trim();
+  }
+
+  // Ausgabe von Claude auf erlaubte Auszeichnungen beschränken
+  function saeubern(html, doc) {
+    var tmp = doc.createElement('div');
+    tmp.innerHTML = String(html || '');
+    (function laufe(el) {
+      Array.prototype.slice.call(el.childNodes).forEach(function (n) {
+        if (n.nodeType === 1) {
+          var t = n.tagName;
+          if (t === 'B') { var s = doc.createElement('strong'); while (n.firstChild) s.appendChild(n.firstChild); n.replaceWith(s); n = s; t = 'STRONG'; }
+          if (t === 'I') { var e = doc.createElement('em'); while (n.firstChild) e.appendChild(n.firstChild); n.replaceWith(e); n = e; t = 'EM'; }
+          if (['BR', 'STRONG', 'EM', 'A'].indexOf(t) < 0) { laufe(n); while (n.firstChild) n.parentNode.insertBefore(n.firstChild, n); n.remove(); return; }
+          Array.prototype.slice.call(n.attributes).forEach(function (a) { if (!(t === 'A' && a.name === 'href')) n.removeAttribute(a.name); });
+          if (t === 'A' && /^\s*javascript:/i.test(n.getAttribute('href') || '')) n.removeAttribute('href');
+          laufe(n);
+        } else if (n.nodeType !== 3) n.remove();
+      });
+    })(tmp);
+    return tmp.innerHTML;
+  }
+
+  // Tiefstes Element, das den ganzen Text umschließt (behält Schriftformatierung)
+  function textZiel(el) {
+    var z = el;
+    while (z.children.length === 1 && ['BR', 'A', 'STRONG', 'B', 'EM', 'I', 'IMG'].indexOf(z.firstElementChild.tagName) < 0 &&
+           bereinigt(z.firstElementChild.textContent) === bereinigt(z.textContent)) z = z.firstElementChild;
+    return z;
+  }
+
+  function umgebung(img) {
+    var alle = Array.prototype.slice.call(img.ownerDocument.querySelector('main').querySelectorAll('h1,h2,h3,p'));
+    var davor = alle.filter(function (e) { return e.compareDocumentPosition(img) & Node.DOCUMENT_POSITION_FOLLOWING; })
+                    .filter(function (e) { return bereinigt(e.textContent); }).pop();
+    return davor ? kurz(bereinigt(davor.textContent), 60) : '';
+  }
+
+  /* ------------------------------------------------------------ Speisekarte */
+  function klammerEnde(text, start) {   // Index nach der passenden schließenden Klammer
+    var tiefeK = 0, i = start, c;
+    for (; i < text.length; i++) {
+      c = text[i];
+      if (c === '"') { i++; while (i < text.length && text[i] !== '"') { if (text[i] === '\\') i++; i++; } continue; }
+      if (c === '/' && text[i + 1] === '*') { i = text.indexOf('*/', i + 2) + 1; continue; }
+      if (c === '/' && text[i + 1] === '/') { i = text.indexOf('\n', i); continue; }
+      if (c === '{' || c === '[') tiefeK++;
+      if (c === '}' || c === ']') { tiefeK--; if (tiefeK === 0) return i + 1; }
+    }
+    throw new Error('Speisekarte: Klammer nicht gefunden');
+  }
+  function karteLesen() {
+    var text = stand.dateien[KARTE];
+    var a = text.indexOf('{', text.indexOf('window.SPEISEKARTE'));
+    var e = klammerEnde(text, a);
+    var roh = text.slice(a, e).replace(/("(?:[^"\\]|\\.)*")|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, function (m, s) { return s || ''; });
+    return { text: text, start: a, ende: e, daten: JSON.parse(roh) };
+  }
+  function wertSpanne(text, objStart, objEnde, schluessel) {
+    var tiefeK = 0, i = objStart;
+    for (; i < objEnde; i++) {
+      var c = text[i];
+      if (c === '"') {
+        var j = i + 1; while (text[j] !== '"') { if (text[j] === '\\') j++; j++; }
+        if (tiefeK === 1 && text.slice(i + 1, j) === schluessel) {
+          var k = j + 1; while (/[\s:]/.test(text[k])) k++;
+          var ende = (text[k] === '{' || text[k] === '[') ? klammerEnde(text, k) : text.slice(k).search(/[,\n}]/) + k;
+          return [k, ende];
+        }
+        i = j; continue;
+      }
+      if (c === '/' && text[i + 1] === '*') { i = text.indexOf('*/', i + 2) + 1; continue; }
+      if (c === '/' && text[i + 1] === '/') { i = text.indexOf('\n', i); continue; }
+      if (c === '{' || c === '[') tiefeK++;
+      if (c === '}' || c === ']') tiefeK--;
+    }
+    return null;
+  }
+  function jsonWert(schluessel, v) {
+    if (typeof v === 'number' && /preis/i.test(schluessel)) return v.toFixed(2);
+    if (Array.isArray(v)) return '[' + v.map(function (x) { return jsonWert('', x); }).join(', ') + ']';
+    if (v && typeof v === 'object') return '{ ' + Object.keys(v).map(function (k) { return JSON.stringify(k) + ': ' + jsonWert(k, v[k]); }).join(', ') + ' }';
+    return JSON.stringify(v);
+  }
+  function rubrikenText(rubriken) {
+    return '[\n\n' + rubriken.map(function (r) {
+      var zeilen = Object.keys(r).map(function (k) {
+        if (k === 'gerichte' && Array.isArray(r[k])) {
+          return '      "gerichte": [\n' + r[k].map(function (g) { return '        ' + jsonWert('', g); }).join(',\n') + '\n      ]';
+        }
+        return '      ' + JSON.stringify(k) + ': ' + (typeof r[k] === 'object' && r[k] !== null ? JSON.stringify(r[k]) : jsonWert(k, r[k]));
+      });
+      return '    {\n' + zeilen.join(',\n') + '\n    }';
+    }).join(',\n\n') + '\n  ]';
+  }
+  function karteSchreiben(k) {
+    var text = k.text;
+    var ersatz = [
+      ['rubriken', rubrikenText(k.daten.rubriken)],
+      ['meta', JSON.stringify(k.daten.meta, null, 2).replace(/\n/g, '\n  ')],
+      ['hinweise', JSON.stringify(k.daten.hinweise || [])]
+    ];
+    // von hinten nach vorne ersetzen, damit die Positionen stimmen
+    var spannen = ersatz.map(function (e) { return { s: wertSpanne(text, k.start, k.ende, e[0]), neu: e[1] }; })
+                        .filter(function (x) { return x.s; }).sort(function (a, b) { return b.s[0] - a.s[0]; });
+    spannen.forEach(function (x) { text = text.slice(0, x.s[0]) + x.neu + text.slice(x.s[1]); });
+    return text;
+  }
+  function pfadHole(obj, pfad) { return pfad.reduce(function (o, p) { if (o == null) throw new Error('Pfad'); return o[p]; }, obj); }
+
+  /* ------------------------------------------------------------ Vorschlag holen */
+  $('btnVorschlag').onclick = function () {
+    stopp();
+    var anweisung = $('anweisung').value.trim();
+    if (!anweisung && fotos.length) anweisung = 'Neue Tageskarte';
+    if (!anweisung) { meldung('meldung', 'frage', 'Bitte sagen oder schreiben, was geändert werden soll.'); return; }
+    meldung('meldung', '', '');
+    var seiten = SEITEN.map(function (s) { return parse(s.datei); });
+    var karte = karteLesen();
+    var inhalt = {
+      seiten: seiten.map(function (p) {
+        return {
+          datei: p.pfad, titel: seitenTitel(p.pfad),
+          segmente: p.segs.map(function (el, i) { return { nr: i, art: el.tagName.toLowerCase(), text: eingeschraenkt(el) }; }),
+          bilder: p.bilder.map(function (img, i) {
+            return { nr: i, tageskarte: img.classList.contains('tageskarte-bild'), datei: (img.getAttribute('src') || '').split('?')[0].split('/').slice(-3).join('/'), nach_text: umgebung(img) };
+          })
+        };
+      }),
+      speisekarte: { meta: karte.daten.meta, rubriken: karte.daten.rubriken, hinweise: karte.daten.hinweise },
+      gesperrt: ['impressum/index.html', 'datenschutzerklarung/index.html'],
+      fotos: fotos.length
+    };
+    zeige('eingabe', false); zeige('ergebnis', false); zeige('arbeitet', true);
+    $('arbeitetText').textContent = 'Claude bereitet die Änderung vor …';
+    anfrage('vorschlag', { anweisung: anweisung, inhalt: inhalt, fotos: fotos.map(function (f) { return f.klein; }) })
+      .then(function (j) {
+        var v = j.vorschlag || {};
+        if (v.rueckfrage && !(v.aenderungen || []).length) {
+          zeige('arbeitet', false); zeige('eingabe', true);
+          meldung('meldung', 'frage', v.rueckfrage);
+          return;
+        }
+        if (!(v.aenderungen || []).length) throw new Error('Claude hat keine Änderung gefunden. Bitte genauer beschreiben.');
+        plan = anwenden(v, seiten, karte, anweisung);
+        zeigeErgebnis();
+      })
+      .catch(function (e) { zeige('arbeitet', false); zeige('eingabe', true); meldung('meldung', 'fehler', e.message); });
+  };
+
+  /* ------------------------------------------------------------ Änderungen anwenden */
+  function anwenden(v, seiten, karte, anweisung) {
+    var nachDatei = {}; seiten.forEach(function (p) { nachDatei[p.pfad] = p; });
+    var geaendert = {}, beschreibung = [], neueBilder = [], karteGeaendert = false, ts = zeitstempel(), version = String(Date.now()).slice(0, 10);
+    var fotoPfad = {};
+    function bildPfad(fotoNr) {
+      if (!fotos[fotoNr]) throw new Error('Foto ' + (fotoNr + 1) + ' fehlt.');
+      if (!fotoPfad[fotoNr]) { fotoPfad[fotoNr] = 'bilder/' + ts + '-' + (fotoNr + 1) + '.jpg'; neueBilder.push({ pfad: fotoPfad[fotoNr], foto: fotoNr }); }
+      return fotoPfad[fotoNr];
+    }
+    function seite(datei) { var p = nachDatei[datei]; if (!p) throw new Error('Unbekannte oder gesperrte Seite: ' + datei); geaendert[datei] = p; return p; }
+    function segment(p, nr) { var el = p.segs[nr]; if (!el) throw new Error('Abschnitt ' + nr + ' auf ' + seitenTitel(p.pfad) + ' nicht gefunden.'); return el; }
+    // Einfügestelle: hinter einem Textabschnitt oder hinter einem Bild(-baustein)
+    function anker(p, a) {
+      if (a.segment != null) return { el: segment(p, a.segment), text: true };
+      var img = p.bilder[a.bild];
+      if (!img) throw new Error('Einfügestelle auf ' + seitenTitel(p.pfad) + ' nicht gefunden.');
+      return { el: img.closest('.section-root') || img.closest('.grid-column-root') || img.parentNode, text: false };
+    }
+    function neuerText(p, html) {
+      var d = p.doc.createElement('div'); d.className = 'vw-text';
+      d.innerHTML = String(html).split(/\n{2,}/).map(function (t) { return '<p>' + saeubern(t, p.doc) + '</p>'; }).join('');
+      return d;
+    }
+    function rahmenAnpassen(img, b, h) {
+      var w = img.closest('.image-wrapper');
+      if (w) w.style.paddingBottom = (h / b * 100).toFixed(4) + '%';
+    }
+
+    (v.aenderungen || []).forEach(function (a) {
+      var p, el, img, ziel, neu;
+      switch (a.typ) {
+        case 'text':
+          p = seite(a.datei); el = segment(p, a.segment);
+          var alt = bereinigt(el.textContent);
+          textZiel(el).innerHTML = saeubern(a.text, p.doc);
+          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Text geändert', alt: alt, neu: bereinigt(el.textContent) });
+          break;
+        case 'einfuegen_nach':
+          p = seite(a.datei); ziel = anker(p, a); el = ziel.el;
+          if (ziel.text) { neu = el.cloneNode(true); textZiel(neu).innerHTML = saeubern(a.text, p.doc); }
+          else neu = neuerText(p, a.text);
+          el.parentNode.insertBefore(neu, el.nextSibling);
+          var teile = neu.querySelectorAll('p');
+          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Neuer Text',
+            neu: teile.length > 1 ? Array.prototype.map.call(teile, function (x) { return bereinigt(x.textContent); }).join(' ') : bereinigt(neu.textContent) });
+          break;
+        case 'loeschen':
+          p = seite(a.datei); el = segment(p, a.segment);
+          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Text entfernt', alt: bereinigt(el.textContent) });
+          el.remove();
+          break;
+        case 'bild_ersetzen':
+          p = seite(a.datei); img = p.bilder[a.bild];
+          if (!img) throw new Error('Bild nicht gefunden.');
+          img.setAttribute('src', praefix(p.pfad) + bildPfad(a.foto));
+          img.removeAttribute('srcset'); img.removeAttribute('sizes');
+          rahmenAnpassen(img, fotos[a.foto].breite, fotos[a.foto].hoehe);
+          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Bild ersetzt durch Foto ' + (a.foto + 1) });
+          break;
+        case 'bild_einfuegen_nach':
+          p = seite(a.datei); el = anker(p, a).el;
+          neu = p.doc.createElement('p'); neu.className = 'vw-bild';
+          neu.innerHTML = '<img alt="">';
+          neu.firstChild.setAttribute('src', praefix(p.pfad) + bildPfad(a.foto));
+          el.parentNode.insertBefore(neu, el.nextSibling);
+          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Foto ' + (a.foto + 1) + ' eingefügt' });
+          break;
+        case 'tageskarte':
+          var f = fotos[a.foto || 0]; if (!f) throw new Error('Für die Tageskarte fehlt das Foto.');
+          neueBilder.push({ pfad: 'tageskarte/tageskarte.jpg', foto: a.foto || 0 });
+          seiten.forEach(function (sp) {
+            Array.prototype.forEach.call(sp.doc.querySelectorAll('img.tageskarte-bild'), function (t) {
+              t.setAttribute('src', t.getAttribute('src').replace(/\?v=\d+/, '') + '?v=' + version);
+              rahmenAnpassen(t, f.breite, f.hoehe);
+              geaendert[sp.pfad] = sp;
+            });
+          });
+          beschreibung.push({ seite: 'Startseite, Speisekarte, Aktuelles', was: 'Neue Tageskarte (Foto ' + ((a.foto || 0) + 1) + ')' });
+          break;
+        case 'speisekarte_setzen':
+          var eltern = pfadHole(karte.daten, a.pfad.slice(0, -1)), sch = a.pfad[a.pfad.length - 1];
+          var vorher = eltern[sch]; eltern[sch] = a.wert; karteGeaendert = true;
+          beschreibung.push({ seite: 'Speisekarte', was: karteText(karte.daten, a.pfad), alt: anzeige(vorher), neu: anzeige(a.wert), fokus: karteName(karte.daten, a.pfad) });
+          break;
+        case 'speisekarte_einfuegen':
+          var liste = pfadHole(karte.daten, a.pfad);
+          if (!Array.isArray(liste)) throw new Error('Speisekarte: Einfügen nicht möglich.');
+          liste.splice(a.index == null ? liste.length : a.index, 0, a.wert); karteGeaendert = true;
+          beschreibung.push({ seite: 'Speisekarte', was: 'Neu: ' + anzeige(a.wert), fokus: a.wert && (a.wert.name || a.wert.titel) });
+          break;
+        case 'speisekarte_loeschen':
+          var el2 = pfadHole(karte.daten, a.pfad.slice(0, -1)), idx = a.pfad[a.pfad.length - 1];
+          beschreibung.push({ seite: 'Speisekarte', was: 'Entfernt: ' + anzeige(el2[idx]) });
+          Array.isArray(el2) ? el2.splice(idx, 1) : delete el2[idx]; karteGeaendert = true;
+          break;
+        default: throw new Error('Unbekannte Änderung: ' + a.typ);
+      }
+    });
+
+    var dateien = Object.keys(geaendert).map(function (pfad) {
+      var p = geaendert[pfad];
+      return { pfad: pfad, inhalt: p.doctype + p.doc.documentElement.outerHTML + '\n' };
+    });
+    if (karteGeaendert) {
+      karte.daten.meta.stand = heute();
+      dateien.push({ pfad: KARTE, inhalt: karteSchreiben(karte) });
+      // Einbettung auf der Speisekarten-Seite neu laden lassen
+      var sk = dateien.filter(function (d) { return d.pfad === 'speisekarte/index.html'; })[0];
+      var basis = sk ? sk.inhalt : stand.dateien['speisekarte/index.html'];
+      var neuSk = basis.replace(/speisekarte-ohne-deckblatt\.html\?v=\d+/, 'speisekarte-ohne-deckblatt.html?v=' + version);
+      if (sk) sk.inhalt = neuSk; else dateien.push({ pfad: 'speisekarte/index.html', inhalt: neuSk });
+    }
+    return {
+      zusammenfassung: v.zusammenfassung || 'Änderung vorbereitet.',
+      anweisung: anweisung, beschreibung: beschreibung, dateien: dateien, neueBilder: neueBilder
+    };
+  }
+  function anzeige(v) {
+    if (v == null) return '–';
+    if (typeof v === 'number') return v.toFixed(2).replace('.', ',') + ' €';
+    if (typeof v === 'object') return [v.name, v.beschreibung, v.preis != null ? anzeige(v.preis) : ''].filter(Boolean).join(' ');
+    return String(v);
+  }
+  function karteName(d, pfad) {
+    try { var r = d.rubriken[pfad[1]]; return pfad[2] === 'gerichte' ? r.gerichte[pfad[3]].name : r.titel; } catch (e) { return ''; }
+  }
+  function karteText(d, pfad) {
+    try {
+      var r = d.rubriken[pfad[1]], g = pfad[2] === 'gerichte' && r.gerichte[pfad[3]];
+      var teil = pfad.slice(g ? 4 : 2).filter(function (x) { return typeof x === 'string'; }).join(' ');
+      return (g ? g.name + (g.beschreibung ? ' ' + g.beschreibung : '') : r.titel) + ' – ' + (teil || 'geändert');
+    } catch (e) { return 'Eintrag geändert'; }
+  }
+
+  /* ------------------------------------------------------------ Vorschau */
+  function vorschauHtml(d) {
+    var html = d.inhalt;
+    plan.neueBilder.forEach(function (b) {
+      var muster = new RegExp('(?:\\.\\./)*' + b.pfad.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&') + '(?:\\?v=\\d+)?', 'g');
+      html = html.replace(muster, function () { return fotos[b.foto].gross; });
+    });
+    var basis = '<base href="' + SITE + ordner(d.pfad) + '">';
+    // In der Vorschau zur ersten Änderung springen und sie markieren
+    var titel = seitenTitel(d.pfad), fokus = { text: '', bild: false };
+    plan.beschreibung.forEach(function (b) {
+      if (b.seite.indexOf(titel.replace(/ \(.*\)$/, '')) < 0) return;
+      var kandidat = b.fokus || bereinigt(b.neu || '').replace(/[\d,.]+ €$/, '').trim();
+      if (!fokus.text && kandidat) fokus.text = kandidat.slice(0, 24);
+      if (/Foto|Bild|Tageskarte/.test(b.was)) fokus.bild = true;
+    });
+    var skript = '<script>addEventListener("load",function(){setTimeout(function(){var t=' + JSON.stringify(fokus).replace(/</g, '\\u003c') +
+      ',z=null,f=function(e){return !/^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(e.tagName)&&(e.textContent||"").replace(/\\s+/g," ").indexOf(t.text)>=0;};' +
+      'if(t.text){[].slice.call(document.body.querySelectorAll("*")).some(function(e){' +
+      'if(f(e)&&![].some.call(e.children,f)){z=e;return true;}});}' +
+      'if(!z&&t.bild){z=document.querySelector("img[src^=\\"data:\\"]");z=z&&(z.closest(".image-wrapper")||z);}' +
+      'if(z){z.scrollIntoView({block:"center"});z.style.outline="3px solid #e0a800";z.style.outlineOffset="4px";}},400);});<\/script>';
+    return html.replace(/<head([^>]*)>/i, '<head$1>' + basis).replace(/<\/body>/i, skript + '</body>');
+  }
+  function zeigeErgebnis() {
+    zeige('arbeitet', false); zeige('ergebnis', true);
+    $('zusammenfassung').textContent = plan.zusammenfassung;
+    $('liste').innerHTML = plan.beschreibung.map(function (b) {
+      return '<li><b>' + esc(b.seite) + ':</b> ' + esc(b.was) +
+        (b.alt ? '<br><span class="alt">' + esc(kurz(b.alt, 120)) + '</span>' : '') +
+        (b.neu ? '<br>' + esc(kurz(b.neu, 160)) : '') + '</li>';
+    }).join('');
+    var karteGeaendert = plan.dateien.some(function (d) { return d.pfad === KARTE; });
+    var html = plan.dateien.filter(function (d) {
+      // die Speisekarten-Seite selbst zeigt die Karte nur eingebettet → dann direkt die Karte zeigen
+      return /\.html$/.test(d.pfad) && !(karteGeaendert && d.pfad === 'speisekarte/index.html' && !plan.beschreibung.some(function (b) { return b.seite === seitenTitel(d.pfad); }));
+    });
+    html.sort(function (a, b) { return (a.pfad === KARTE) - (b.pfad === KARTE); });
+    $('tabs').innerHTML = html.map(function (d, i) {
+      return '<button data-i="' + i + '"' + (i ? '' : ' class="aktiv"') + '>' + esc(seitenTitel(d.pfad)) + '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('tabs').querySelectorAll('button'), function (b) {
+      b.onclick = function () {
+        Array.prototype.forEach.call($('tabs').children, function (x) { x.classList.remove('aktiv'); });
+        b.classList.add('aktiv'); $('vorschau').srcdoc = vorschauHtml(html[Number(b.dataset.i)]);
+      };
+    });
+    if (html.length) $('vorschau').srcdoc = vorschauHtml(html[0]);
+    zeige('vorschau', html.length > 0);
+    $('ergebnis').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /* ------------------------------------------------------------ Veröffentlichen */
+  $('btnVeroeffentlichen').onclick = function () {
+    var btn = this; btn.disabled = true;
+    var dateien = plan.dateien.slice();
+    plan.neueBilder.forEach(function (b) { dateien.push({ pfad: b.pfad, base64: fotos[b.foto].gross.split(',')[1] }); });
+    zeige('ergebnis', false); zeige('arbeitet', true); $('arbeitetText').textContent = 'Wird veröffentlicht …';
+    anfrage('veroeffentlichen', { basisSha: stand.sha, dateien: dateien, zusammenfassung: plan.zusammenfassung })
+      .then(function () { return anfrage('dateien'); })
+      .then(function (j) {
+        stand = j; zeigeStatus(j.status);
+        plan = null; fotos = []; zeigeFotos(); $('anweisung').value = '';
+        zeige('arbeitet', false); zeige('eingabe', true);
+        meldung('meldung', 'ok', 'Veröffentlicht! In 1–2 Minuten ist die Änderung auf der Homepage sichtbar.');
+      })
+      .catch(function (e) { zeige('arbeitet', false); zeige('ergebnis', true); meldung('meldung', 'fehler', e.message); })
+      .then(function () { btn.disabled = false; });
+  };
+  $('btnVerwerfen').onclick = function () {
+    plan = null; zeige('ergebnis', false); zeige('eingabe', true); meldung('meldung', '', '');
+  };
+  $('btnNachbessern').onclick = function () {
+    var vorher = plan ? plan.anweisung : '';
+    plan = null; zeige('ergebnis', false); zeige('eingabe', true);
+    $('anweisung').value = vorher + '\nZusätzlich: ';
+    $('anweisung').focus();
+    meldung('meldung', 'frage', 'Ergänze, was anders sein soll, und tippe dann auf „Änderung vorbereiten“.');
+  };
+
+  /* ------------------------------------------------------------ Rückgängig */
+  $('btnRueckgaengig').onclick = function () {
+    if (!confirm('Die letzte Änderung wirklich rückgängig machen?')) return;
+    var btn = this; btn.disabled = true;
+    anfrage('rueckgaengig')
+      .then(function () { return anfrage('dateien'); })
+      .then(function (j) { stand = j; zeigeStatus(j.status); meldung('meldung', 'ok', 'Rückgängig gemacht. In 1–2 Minuten ist die Homepage wieder wie vorher.'); })
+      .catch(function (e) { meldung('meldung', 'fehler', e.message); btn.disabled = false; });
+  };
+
+  /* ------------------------------------------------------------ Start */
+  var gemerkt = laden('vw_pin');
+  if (gemerkt) { $('pin').value = gemerkt; anmelden(gemerkt); }
+  else $('pin').focus();
+
+  // für Tests
+  window.__vw = { anwenden: function (v, a) { var s = SEITEN.map(function (x) { return parse(x.datei); }); plan = anwenden(v, s, karteLesen(), a || ''); return plan; },
+                  karteLesen: function () { return karteLesen(); }, karteSchreiben: karteSchreiben };
+})();
+</script>
+</body>
+</html>
