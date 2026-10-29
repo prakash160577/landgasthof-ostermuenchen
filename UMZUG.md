@@ -1,39 +1,29 @@
-# Umzug landgasthof-ostermuenchen.de von STRATO auf GitHub Pages
+# Domain landgasthof-ostermuenchen.de – Einstellungen
 
-Die Domain und die E-Mail (wirt@landgasthof-ostermuenchen.de) **bleiben bei STRATO**.
-Geändert wird nur, wohin die Website zeigt. Die E-Mail-Einträge (MX) werden nicht angefasst.
+**Umgestellt am 29.10.2026.** Die Website läuft auf GitHub Pages, Domain und E-Mail bleiben bei STRATO.
 
-## Schritt 1 – Claude bereitet das Repo vor
-- Inhalt von `neu/` wird in den Stamm verschoben (alte Dateien sind im Zweig `alt-version` gesichert)
-- Datei `CNAME` mit `landgasthof-ostermuenchen.de` wird angelegt
-- Impressum und Datenschutzerklärung auf GitHub-Hosting angepasst
+## Aktuelle DNS-Einstellungen bei STRATO
+(Kundenlogin → Paket „STRATO SmartWebsite Pro“ → ⋮ → Domains → Zahnrad → DNS)
 
-## Schritt 2 – GitHub (am PC, ca. 2 Minuten)
-1. github.com → Repo `landgasthof-ostermuenchen` → **Settings** → **Pages**
-2. Bei **Custom domain** `landgasthof-ostermuenchen.de` eintragen → **Save**
-3. Nach erfolgreicher Prüfung **Enforce HTTPS** anhaken (kann bis zu 24 Std. dauern, bis die Option erscheint)
+| Name | Typ | Wert |
+|---|---|---|
+| landgasthof-ostermuenchen.de | A | 185.199.108.153 (GitHub) |
+| landgasthof-ostermuenchen.de | AAAA | 2606:50c0:8000::153 (GitHub) |
+| www.landgasthof-ostermuenchen.de | A | 185.199.108.153 (GitHub, Subdomain angelegt) |
+| www.landgasthof-ostermuenchen.de | AAAA | 2606:50c0:8000::153 (GitHub) |
+| landgasthof-ostermuenchen.de | MX | **STRATO Mailserver – nicht ändern** |
 
-## Schritt 3 – STRATO (am PC, ca. 5 Minuten)
-1. STRATO-Kundenlogin → **Domains** → **Domainverwaltung**
-2. Bei `landgasthof-ostermuenchen.de` auf das Zahnrad / **Verwalten** → **DNS**
-3. **A-Record** → *verwalten* → „andere IP-Adresse“ und diese vier eintragen:
-   - `185.199.108.153`
-   - `185.199.109.153`
-   - `185.199.110.153`
-   - `185.199.111.153`
-4. **AAAA-Record** (IPv6) → *verwalten* → entweder leeren oder diese eintragen:
-   - `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153`
-5. Subdomain **www**: CNAME-Record auf `prakash160577.github.io` setzen
-6. **MX-Record NICHT ändern** – muss auf „STRATO Mailserver“ stehen bleiben
+STRATO erlaubt nur eine A-Adresse; GitHub Pages funktioniert damit.
+Die Datei `CNAME` im Repo trägt die Domain bei GitHub Pages ein. `www` leitet automatisch auf die Hauptadresse weiter.
 
-Die Umstellung wird je nach DNS-Cache innerhalb von Minuten bis wenigen Stunden wirksam.
-In dieser Zeit sehen manche Besucher noch die alte, andere schon die neue Seite – beide sehen gleich aus.
+## ⚠️ Wichtig: Paket nicht kündigen
+Die Domain und das E-Mail-Postfach gehören zum Paket **„STRATO SmartWebsite Pro“**.
+Wer dieses Paket kündigt, verliert Domain und E-Mail. Eine Umstellung auf ein günstigeres
+reines Domain-/E-Mail-Paket nur mit STRATO abklären, damit Domain und Postfach übernommen werden.
 
-## Schritt 4 – Prüfen
-- https://landgasthof-ostermuenchen.de lädt die neue Seite (Schloss-Symbol im Browser)
-- Testmail an wirt@landgasthof-ostermuenchen.de senden und empfangen
-- Danach kann der STRATO-Website-Baukasten (SmartWebsite) gekündigt werden –
-  **nicht** die Domain und **nicht** das E-Mail-Paket
+## Offener Punkt
+GitHub → Repo → Settings → Pages → **„Enforce HTTPS“** anhaken (mit GitHub-Login),
+damit http:// automatisch auf https:// umgeleitet wird.
 
-## Zurück zur alten Seite (falls nötig)
-In STRATO bei A-Record wieder „STRATO-Standard“ wählen.
+## Zurück zur alten STRATO-Seite (falls nötig)
+Bei A- und AAAA-Record (Hauptdomain und www) wieder „STRATO Standard IP-Adresse“ wählen.
