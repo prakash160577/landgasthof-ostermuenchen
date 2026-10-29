@@ -20,13 +20,22 @@ def main():
         sys.exit(__doc__)
     src = sys.argv[1]
     root = sys.argv[2] if len(sys.argv) > 2 else os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    dst = os.path.join(root, 'tageskarte', 'tageskarte.jpg')
 
     im = ImageOps.exif_transpose(Image.open(src)).convert('RGB')
     if im.width > MAX_W:
         im = im.resize((MAX_W, round(im.height * MAX_W / im.width)), Image.LANCZOS)
-    os.makedirs(os.path.dirname(dst), exist_ok=True)
-    im.save(dst, 'JPEG', quality=86, optimize=True, progressive=True)
+
+    # in jeden vorhandenen Tageskarten-Ordner schreiben (Live-Seite und ggf. Vorschau /neu/)
+    targets = []
+    for dirpath, dirnames, files in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in ('.git', 'tools')]
+        if os.path.basename(dirpath) == 'tageskarte' and 'tageskarte.jpg' in files:
+            targets.append(os.path.join(dirpath, 'tageskarte.jpg'))
+    if not targets:
+        targets = [os.path.join(root, 'tageskarte', 'tageskarte.jpg')]
+    for dst in targets:
+        os.makedirs(os.path.dirname(dst), exist_ok=True)
+        im.save(dst, 'JPEG', quality=86, optimize=True, progressive=True)
 
     ratio = round(im.height / im.width * 100, 4)
     version = str(int(time.time()))
@@ -48,7 +57,7 @@ def main():
             if h2 != h:
                 open(p, 'w', encoding='utf-8').write(h2)
                 changed.append(os.path.relpath(p, root))
-    print(f'Tageskarte gespeichert: {os.path.relpath(dst, root)} ({im.width}x{im.height})')
+    print('Tageskarte gespeichert:', ', '.join(os.path.relpath(t, root) for t in targets), f'({im.width}x{im.height})')
     print('Aktualisierte Seiten:', ', '.join(changed) or 'keine')
 
 

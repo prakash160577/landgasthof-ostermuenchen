@@ -1,66 +1,45 @@
 # Landgasthof Ostermünchen – Website
 
-Statische Website für GitHub Pages. Alle Inhalte werden über `js/data.js` gesteuert.
+1:1-Nachbau der bisherigen STRATO-Seite als statische Website auf GitHub Pages.
+Design, Texte, Bilder und Schriften sind direkt aus der Live-Seite übernommen.
 
-## Struktur
+## Stand
 
-```
-landgasthof/
-├── index.html              ← Startseite
-├── css/
-│   └── style.css           ← Alle Styles
-├── js/
-│   ├── data.js             ← ⭐ ALLE INHALTE (Speisekarte, Zeiten, News...)
-│   └── shared.js           ← Navigation, Hilfsfunktionen
-├── pages/
-│   ├── speisekarte.html
-│   ├── raeume.html
-│   ├── aktuelles.html
-│   ├── kontakt.html
-│   ├── do-samma.html
-│   ├── impressum.html
-│   └── datenschutz.html
-└── admin/
-    └── index.html          ← 📱 Admin-App (Smartphone)
+| Ort | Inhalt |
+|---|---|
+| `neu/` | **Neue Website (Vorschau)** – https://prakash160577.github.io/landgasthof-ostermuenchen/neu/ |
+| Zweig `alt-version` | Gesicherter früherer GitHub-Nachbau |
+| Stamm (`index.html`, `pages/`, `js/`, `admin/` …) | Früherer GitHub-Nachbau, wird beim Umzug durch `neu/` ersetzt |
+| `speisekarte-ohne-deckblatt.html` | Speisekarte; wird von der Speisekarten-Seite eingebettet (auch von der STRATO-Seite) |
+
+## Tageskarte austauschen
+
+```bash
+python3 tools/tageskarte.py /pfad/zum/bild.jpg
+git add -A && git commit -m "Tageskarte aktualisiert" && git push
 ```
 
-## Deployment auf GitHub Pages
+Das Skript speichert das Bild als `tageskarte/tageskarte.jpg` (in jedem vorhandenen
+Tageskarten-Ordner), passt das Seitenverhältnis an und setzt eine neue Versionsnummer,
+damit Besucher sofort die neue Karte sehen. Die Tageskarte erscheint auf
+**Startseite, Speisekarte und Aktuelles**. Nach dem Push ist sie in ca. 1–2 Minuten online.
 
-1. Neues Repository auf GitHub anlegen (z.B. `landgasthof-web`)
-2. Alle Dateien hochladen
-3. GitHub → Settings → Pages → Source: `main` Branch, `/ (root)` Ordner
-4. Domain: Bei GitHub Pages Custom Domain `landgasthof-ostermuenchen.de` eintragen
-5. Bei Strato: DNS CNAME auf `<username>.github.io` zeigen lassen (oder A-Records auf GitHub IPs)
+## Aufbau
 
-## Custom Domain (Strato → GitHub Pages)
-
-Bei Strato im DNS-Bereich:
-- `A` Record: `185.199.108.153`
-- `A` Record: `185.199.109.153`
-- `A` Record: `185.199.110.153`
-- `A` Record: `185.199.111.153`
-- `CNAME www`: `<username>.github.io`
-
-In GitHub repository eine Datei `CNAME` erstellen mit Inhalt:
 ```
-landgasthof-ostermuenchen.de
+neu/
+├── index.html                  Startseite
+├── speisekarte/ raeume/ aktuelles/ kontakt/ do-samma/ impressum/ datenschutzerklarung/
+├── tageskarte/tageskarte.jpg   aktuelle Tageskarte
+├── site/site.css, site.js      eigene Ergänzungen (Karte nach Zustimmung, Tageskarte)
+└── wp-content/                 Original-Bilder, CSS und Schriften der STRATO-Seite
+tools/
+├── tageskarte.py               Tageskarte austauschen
+└── strato-import.py            einmaliger Import aus der STRATO-Seite (Dokumentation)
 ```
 
-## Inhalte ändern (ohne Admin-App)
+Texte ändern: direkt in der jeweiligen `index.html` (Text steht im HTML).
 
-Die Datei `js/data.js` bearbeiten – alle Texte, Preise, Zeiten sind dort gebündelt.
+## Umzug der Domain (erst nach Freigabe)
 
-## Admin-App (Smartphone)
-
-URL: `https://landgasthof-ostermuenchen.de/admin/`
-
-Standard-Passwort: `gasthof2025`
-→ **Bitte in `admin/index.html` Zeile 10 ändern!**
-
-Die App exportiert eine neue `data.js` → diese bei GitHub hochladen → Website aktualisiert sich.
-
-## Bilder
-
-Die Website lädt Bilder direkt von der alten Strato/WordPress-URL. Langfristig empfohlen:
-- Bilder in einen `img/` Ordner im Repository laden
-- Pfade in `data.js` und HTML anpassen
+Siehe `UMZUG.md`.
