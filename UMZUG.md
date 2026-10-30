@@ -21,9 +21,9 @@ Die Domain und das E-Mail-Postfach gehören zum Paket **„STRATO SmartWebsite P
 Wer dieses Paket kündigt, verliert Domain und E-Mail. Eine Umstellung auf ein günstigeres
 reines Domain-/E-Mail-Paket nur mit STRATO abklären, damit Domain und Postfach übernommen werden.
 
-## Offener Punkt
-GitHub → Repo → Settings → Pages → **„Enforce HTTPS“** anhaken (mit GitHub-Login),
-damit http:// automatisch auf https:// umgeleitet wird.
+## HTTPS
+„Enforce HTTPS“ ist seit 30.10.2026 aktiv (http:// leitet auf https:// um).
+Falls GitHub das Zertifikat einmal nicht erneuert: CNAME-Datei entfernen, pushen, wieder hinzufügen, pushen.
 
 ## Zurück zur alten STRATO-Seite (falls nötig)
 Bei A- und AAAA-Record (Hauptdomain und www) wieder „STRATO Standard IP-Adresse“ wählen.
