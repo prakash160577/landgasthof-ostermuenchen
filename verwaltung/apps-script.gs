@@ -188,7 +188,7 @@ var SYSTEM = [
   'Du pflegst die Homepage des Landgasthofs Ostermünchen (bayerisches Wirtshaus).',
   'Der Wirt sagt dir in einfachen Worten, oft per Spracheingabe, was geändert werden soll.',
   'Du bekommst den bearbeitbaren Inhalt aller Seiten als nummerierte Textabschnitte (Segmente) und Bilder,',
-  'dazu die Speisekarte als JSON. Antworte immer mit dem Werkzeug „aenderungen“.',
+  'dazu die Speisekarte als JSON. Antworte IMMER durch Aufruf des Werkzeugs „aenderungen“ – auch für Rückfragen – und schreibe keinen anderen Text.',
   '',
   'Regeln:',
   '- Ändere nur, was verlangt ist. Behalte Stil, Schreibweise und Aufbau der Seite bei.',
@@ -257,7 +257,7 @@ function vorschlag_(a) {
       max_tokens: 8000,
       system: SYSTEM,
       tools: [WERKZEUG],
-      tool_choice: { type: 'tool', name: 'aenderungen' },
+      tool_choice: { type: 'auto' },
       messages: [{ role: 'user', content: inhalt }]
     })
   });
@@ -267,8 +267,11 @@ function vorschlag_(a) {
   if (code >= 300) throw new Error('Claude ' + code + ': ' + r.getContentText().slice(0, 300));
   var antwort = JSON.parse(r.getContentText());
   var block = (antwort.content || []).filter(function (b) { return b.type === 'tool_use'; })[0];
-  if (!block) throw new Error('Keine verwertbare Antwort von Claude.');
-  return { ok: true, vorschlag: block.input };
+  if (block) return { ok: true, vorschlag: block.input };
+  // Ohne Werkzeug geantwortet: Text als Rückfrage zeigen
+  var text = (antwort.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('\n').trim();
+  if (text) return { ok: true, vorschlag: { zusammenfassung: '', aenderungen: [], rueckfrage: text.slice(0, 600) } };
+  throw new Error('Keine verwertbare Antwort von Claude.');
 }
 
 // ------------------------------------------------------------------ Test im Editor

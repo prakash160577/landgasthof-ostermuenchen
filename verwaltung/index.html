@@ -211,7 +211,7 @@ a{color:var(--akzent)}
   function zeigeStatus(s) {
     if (!s) return;
     var d = new Date(s.letztesDatum);
-    var text = s.letzteNachricht.replace(/^\[Verwaltung\]\s*/, '');
+    var text = s.letzteNachricht.split('\n')[0].replace(/^\[Verwaltung\]\s*/, '');
     $('status').textContent = 'Letzte Änderung: ' + kurz(text, 90) + ' (' + d.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) + ')';
     $('btnRueckgaengig').disabled = !s.rueckgaengigMoeglich;
   }
