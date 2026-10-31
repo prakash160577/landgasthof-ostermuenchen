@@ -64,6 +64,12 @@ ul.liste li{margin:4px 0}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
 .tabs button{min-height:40px;padding:8px 12px;font-size:15px;background:var(--akzent-hell);color:var(--akzent)}
 .tabs button.aktiv{background:var(--akzent);color:#fff}
+.ansicht{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
+.ansicht-leiste{display:flex;align-items:center;gap:8px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top));
+  background:var(--karte);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.ansicht-leiste button{min-height:44px;padding:10px 14px;background:var(--akzent);color:#fff}
+.ansicht-leiste span{color:var(--leise);font-size:14px}
+.ansicht iframe{flex:1;width:100%;border:0;background:#fff}
 .vorschau{width:100%;height:70vh;border:1px solid var(--rand);border-radius:10px;background:#fff}
 .versteckt{display:none!important}
 .pin{max-width:360px;margin:12vh auto 0}
@@ -137,11 +143,19 @@ a{color:var(--akzent)}
         <button id="btnRueckgaengig" class="zweit" disabled>↩︎ Letzte Änderung rückgängig</button>
       </div>
       <div class="reihe" style="margin-top:4px">
-        <a href="../" target="_blank" rel="noopener" style="flex:1;padding:8px 0">Homepage ansehen</a>
+        <a href="../" id="lnkHomepage" style="flex:1;padding:8px 0">Homepage ansehen</a>
         <button id="btnAbmelden" class="leise" style="flex:0 0 auto">Abmelden</button>
       </div>
     </div>
   </section>
+</div>
+
+<div id="ansicht" class="ansicht versteckt">
+  <div class="ansicht-leiste">
+    <button id="btnAnsichtZu" type="button">← Zurück zur Verwaltung</button>
+    <span>Homepage</span>
+  </div>
+  <iframe id="ansichtRahmen" title="Homepage"></iframe>
 </div>
 
 <script>
@@ -724,6 +738,31 @@ a{color:var(--akzent)}
       .then(function (j) { stand = j; zeigeStatus(j.status); meldung('meldung', 'ok', 'Rückgängig gemacht. In 1–2 Minuten ist die Homepage wieder wie vorher.'); })
       .catch(function (e) { meldung('meldung', 'fehler', e.message); btn.disabled = false; });
   };
+
+  /* ------------------------------------------------------------ Homepage in der App ansehen */
+  // Für jede Ansicht ein neuer Rahmen, damit die Handy-Zurück-Taste sauber funktioniert.
+  var ladungen = 0;
+  function ansichtAuf() {
+    var alt = $('ansichtRahmen'), neu = document.createElement('iframe');
+    neu.id = 'ansichtRahmen'; neu.title = 'Homepage';
+    ladungen = 0; neu.addEventListener('load', function () { ladungen++; });
+    neu.src = SITE + '?t=' + Date.now();
+    alt.parentNode.replaceChild(neu, alt);
+    zeige('ansicht', true); document.body.style.overflow = 'hidden';
+    try { history.pushState({ ansicht: 1 }, ''); } catch (e) {}
+  }
+  function ansichtZu() {
+    zeige('ansicht', false); document.body.style.overflow = '';
+    $('ansichtRahmen').removeAttribute('src');
+  }
+  $('lnkHomepage').onclick = function (e) { e.preventDefault(); ansichtAuf(); };
+  // Knopf: alle Schritte innerhalb der Homepage plus den eigenen Eintrag zurückgehen
+  $('btnAnsichtZu').onclick = function () {
+    ansichtZu();
+    try { history.go(-Math.max(1, ladungen)); } catch (e) {}
+  };
+  // Zurück-Taste des Handys schließt die Ansicht statt die App zu verlassen
+  window.addEventListener('popstate', function () { if (!$('ansicht').classList.contains('versteckt')) ansichtZu(); });
 
   /* ------------------------------------------------------------ Start */
   var gemerkt = laden('vw_pin');
