@@ -39,6 +39,9 @@ tools/
 
 Texte ändern: direkt in der jeweiligen `index.html` (Text steht im HTML).
 
+Nach Änderungen an `site/site.css` oder `site/site.js` die Versionsnummer `?v=…` in allen Seiten erhöhen,
+sonst sehen Besucher bis zu 10 Minuten die alte Fassung (GitHub-Zwischenspeicher).
+
 ## Domain
 
 DNS-Einstellungen und Rückweg: siehe `UMZUG.md`.
