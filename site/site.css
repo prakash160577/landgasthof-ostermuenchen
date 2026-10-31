@@ -8,3 +8,13 @@
 .vw-text a{color:#60233a}
 .vw-bild{margin:24px auto;padding:0 16px;text-align:center}
 .vw-bild img{display:block;width:100%;max-width:520px;height:auto;margin:0 auto}
+
+/* Google-Karte (Do samma): Zustimmungsfeld auf dem Handy vollständig zeigen,
+   im STRATO-Original war der Knopf „Akzeptieren“ abgeschnitten */
+.grid-module-container-root:has(> .module-blocker-root),
+.grid-module-container-root:has(> .map-root){overflow:visible;height:auto!important;min-height:420px}
+@media (max-width:767px){
+  .module-blocker-root .module-blocker-title{font-size:20px!important;line-height:1.25}
+  .module-blocker-root .module-blocker-text{font-size:14px!important}
+  .module-blocker-root .module-blocker-message-grid{margin:16px;padding:20px}
+}
