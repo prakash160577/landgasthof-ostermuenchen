@@ -230,28 +230,39 @@ a{color:var(--akzent)}
   } else {
     $('btnMic').onclick = function () { hoert ? stopp() : start(); };
   }
+  // Satz für Satz erkennen (continuous=false). Chrome auf Android liefert im Dauerbetrieb
+  // jedes Zwischenergebnis kumuliert noch einmal mit – daher nur das letzte Ergebnis verwenden.
+  var satz = '';
   function start() {
-    erk = new Erkennung();
-    erk.lang = 'de-DE'; erk.continuous = true; erk.interimResults = true;
     basisText = $('anweisung').value ? $('anweisung').value.replace(/\s*$/, ' ') : '';
+    hoert = true; $('btnMic').classList.add('an'); $('btnMic').textContent = '⏹ Fertig';
+    hoeren();
+  }
+  function hoeren() {
+    satz = '';
+    erk = new Erkennung();
+    erk.lang = 'de-DE'; erk.continuous = false; erk.interimResults = true; erk.maxAlternatives = 1;
     erk.onresult = function (ev) {
-      var fertig = '', zwischen = '';
-      for (var i = 0; i < ev.results.length; i++) {
-        (ev.results[i].isFinal ? (fertig += ev.results[i][0].transcript) : (zwischen += ev.results[i][0].transcript));
-      }
-      $('anweisung').value = basisText + fertig + zwischen;
+      var r = ev.results[ev.results.length - 1];
+      satz = r[0].transcript.trim();
+      $('anweisung').value = basisText + satz;
     };
     erk.onerror = function (ev) {
-      if (ev.error === 'not-allowed') meldung('meldung', 'fehler', 'Bitte den Zugriff aufs Mikrofon erlauben.');
-      stopp();
+      if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
+        meldung('meldung', 'fehler', 'Bitte den Zugriff aufs Mikrofon erlauben.'); stopp();
+      }
+      // „no-speech“ und kurze Aussetzer: einfach weiter zuhören (onend startet neu)
     };
-    erk.onend = function () { if (hoert) { basisText = $('anweisung').value.replace(/\s*$/, ' '); try { erk.start(); } catch (e) { stopp(); } } };
-    hoert = true; $('btnMic').classList.add('an'); $('btnMic').textContent = '⏹ Fertig';
+    erk.onend = function () {
+      if (satz) { basisText = basisText + satz + ' '; satz = ''; $('anweisung').value = basisText; }
+      if (hoert) { try { hoeren(); } catch (e) { stopp(); } }
+    };
     try { erk.start(); } catch (e) { stopp(); }
   }
   function stopp() {
     hoert = false; $('btnMic').classList.remove('an'); $('btnMic').textContent = '🎤 Sprechen';
     try { erk && erk.stop(); } catch (e) {}
+    $('anweisung').value = $('anweisung').value.replace(/\s+$/, '');
   }
 
   /* ------------------------------------------------------------ Fotos */
