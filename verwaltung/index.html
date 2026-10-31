@@ -67,6 +67,10 @@ ul.liste li{margin:4px 0}
 .vorschau{width:100%;height:70vh;border:1px solid var(--rand);border-radius:10px;background:#fff}
 .versteckt{display:none!important}
 .pin{max-width:360px;margin:12vh auto 0}
+.kontext{display:flex;align-items:flex-start;gap:8px;background:var(--akzent-hell);color:var(--akzent);
+  border-radius:10px;padding:8px 10px;margin:0 0 8px;font-size:14px}
+.kontext span{flex:1;min-width:0}
+.kontext button{min-height:auto;padding:0 4px;background:none;color:var(--akzent);font-size:18px;line-height:1}
 .pin input{font-size:24px;letter-spacing:6px;text-align:center}
 a{color:var(--akzent)}
 </style>
@@ -94,6 +98,7 @@ a{color:var(--akzent)}
 
     <div class="karte" id="eingabe">
       <label for="anweisung">Was soll auf der Homepage geändert werden?</label>
+      <div id="kontext" class="kontext versteckt"><span id="kontextText"></span><button id="btnKontextWeg" type="button" aria-label="Zusammenhang verwerfen">✕</button></div>
       <textarea id="anweisung" placeholder="z. B. „Neue Tageskarte“ und Foto anhängen – oder „Am Montag, 3. November, haben wir geschlossen“"></textarea>
       <div style="height:10px"></div>
       <div class="reihe">
@@ -163,6 +168,7 @@ a{color:var(--akzent)}
   var stand = null;      // { sha, dateien: {pfad: text}, status }
   var fotos = [];        // { gross: dataURL, klein: base64, breite, hoehe }
   var plan = null;       // vorbereitete Änderung
+  var kontext = '';      // vorherige Anweisung/Rückfrage, auf die sich die nächste Eingabe bezieht
   var $ = function (id) { return document.getElementById(id); };
 
   /* ------------------------------------------------------------ Hilfen */
@@ -192,6 +198,13 @@ a{color:var(--akzent)}
       .then(function (j) { if (!j.ok) throw new Error(j.fehler || 'Unbekannter Fehler.'); return j; });
   }
 
+  function setzeKontext(text) {
+    kontext = text || '';
+    $('kontextText').textContent = kontext ? 'Bezieht sich auf: ' + kurz(kontext.split('\n')[0], 90) : '';
+    zeige('kontext', !!kontext);
+  }
+  function feldLeeren() { $('anweisung').value = ''; }
+
   /* ------------------------------------------------------------ Anmeldung */
   function anmelden(p) {
     pin = p;
@@ -209,6 +222,7 @@ a{color:var(--akzent)}
   }
   $('btnAnmelden').onclick = function () { var p = $('pin').value.trim(); if (p) anmelden(p); };
   $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('btnAnmelden').click(); });
+  $('btnKontextWeg').onclick = function () { setzeKontext(''); };
   $('btnAbmelden').onclick = function () { speichern('vw_pin', null); location.reload(); };
 
   function zeigeStatus(s) {
@@ -234,7 +248,7 @@ a{color:var(--akzent)}
   // jedes Zwischenergebnis kumuliert noch einmal mit – daher nur das letzte Ergebnis verwenden.
   var satz = '';
   function start() {
-    basisText = $('anweisung').value ? $('anweisung').value.replace(/\s*$/, ' ') : '';
+    feldLeeren(); basisText = ''; meldung('meldung', '', '');
     hoert = true; $('btnMic').classList.add('an'); $('btnMic').textContent = '⏹ Fertig';
     hoeren();
   }
@@ -445,9 +459,10 @@ a{color:var(--akzent)}
   /* ------------------------------------------------------------ Vorschlag holen */
   $('btnVorschlag').onclick = function () {
     stopp();
-    var anweisung = $('anweisung').value.trim();
-    if (!anweisung && fotos.length) anweisung = 'Neue Tageskarte';
-    if (!anweisung) { meldung('meldung', 'frage', 'Bitte sagen oder schreiben, was geändert werden soll.'); return; }
+    var eingabe = $('anweisung').value.trim();
+    if (!eingabe && fotos.length) eingabe = 'Neue Tageskarte';
+    if (!eingabe) { meldung('meldung', 'frage', 'Bitte sagen oder schreiben, was geändert werden soll.'); return; }
+    var anweisung = kontext ? kontext + '\n' + eingabe : eingabe;
     meldung('meldung', '', '');
     var seiten = SEITEN.map(function (s) { return parse(s.datei); });
     var karte = karteLesen();
@@ -472,7 +487,9 @@ a{color:var(--akzent)}
         var v = j.vorschlag || {};
         if (v.rueckfrage && !(v.aenderungen || []).length) {
           zeige('arbeitet', false); zeige('eingabe', true);
-          meldung('meldung', 'frage', v.rueckfrage);
+          setzeKontext(anweisung + '\nRückfrage: ' + v.rueckfrage + '\nAntwort:');
+          feldLeeren();
+          meldung('meldung', 'frage', v.rueckfrage + ' – Antworte einfach im leeren Feld.');
           return;
         }
         if (!(v.aenderungen || []).length) throw new Error('Claude hat keine Änderung gefunden. Bitte genauer beschreiben.');
@@ -679,7 +696,7 @@ a{color:var(--akzent)}
       .then(function () { return anfrage('dateien'); })
       .then(function (j) {
         stand = j; zeigeStatus(j.status);
-        plan = null; fotos = []; zeigeFotos(); $('anweisung').value = '';
+        plan = null; fotos = []; zeigeFotos(); feldLeeren(); setzeKontext('');
         zeige('arbeitet', false); zeige('eingabe', true);
         meldung('meldung', 'ok', 'Veröffentlicht! In 1–2 Minuten ist die Änderung auf der Homepage sichtbar.');
       })
@@ -688,13 +705,14 @@ a{color:var(--akzent)}
   };
   $('btnVerwerfen').onclick = function () {
     plan = null; zeige('ergebnis', false); zeige('eingabe', true); meldung('meldung', '', '');
+    feldLeeren(); setzeKontext('');
   };
   $('btnNachbessern').onclick = function () {
     var vorher = plan ? plan.anweisung : '';
     plan = null; zeige('ergebnis', false); zeige('eingabe', true);
-    $('anweisung').value = vorher + '\nZusätzlich: ';
-    $('anweisung').focus();
-    meldung('meldung', 'frage', 'Ergänze, was anders sein soll, und tippe dann auf „Änderung vorbereiten“.');
+    setzeKontext(vorher + '\nNachbesserung:');
+    feldLeeren();
+    meldung('meldung', 'frage', 'Sag oder schreib, was anders sein soll, und tippe dann auf „Änderung vorbereiten“.');
   };
 
   /* ------------------------------------------------------------ Rückgängig */
