@@ -108,8 +108,8 @@ function kopf_() {
   return { sha: ref.object.sha, baum: commit.tree.sha, nachricht: commit.message, datum: commit.author.date, eltern: commit.parents };
 }
 
-function status_() {
-  var k = kopf_();
+function status_(k) {
+  k = k || kopf_();
   return {
     sha: k.sha,
     letzteNachricht: k.nachricht,
@@ -120,20 +120,22 @@ function status_() {
 
 function dateien_() {
   var k = kopf_();
+  var kopfzeilen = {
+    Authorization: 'Bearer ' + eig_('GITHUB_TOKEN'),
+    Accept: 'application/vnd.github.raw+json',
+    'X-GitHub-Api-Version': '2022-11-28'
+  };
+  // alle Seiten gleichzeitig laden
+  var antworten = UrlFetchApp.fetchAll(ERLAUBT.map(function (pfad) {
+    return { url: 'https://api.github.com/repos/' + REPO + '/contents/' + pfad + '?ref=' + k.sha,
+             headers: kopfzeilen, muteHttpExceptions: true };
+  }));
   var inhalt = {};
-  ERLAUBT.forEach(function (pfad) {
-    var r = UrlFetchApp.fetch('https://api.github.com/repos/' + REPO + '/contents/' + pfad + '?ref=' + k.sha, {
-      muteHttpExceptions: true,
-      headers: {
-        Authorization: 'Bearer ' + eig_('GITHUB_TOKEN'),
-        Accept: 'application/vnd.github.raw+json',
-        'X-GitHub-Api-Version': '2022-11-28'
-      }
-    });
-    if (r.getResponseCode() !== 200) throw new Error('Datei ' + pfad + ' nicht lesbar (' + r.getResponseCode() + ')');
-    inhalt[pfad] = r.getContentText('UTF-8');
+  antworten.forEach(function (r, i) {
+    if (r.getResponseCode() !== 200) throw new Error('Datei ' + ERLAUBT[i] + ' nicht lesbar (' + r.getResponseCode() + ')');
+    inhalt[ERLAUBT[i]] = r.getContentText('UTF-8');
   });
-  return { ok: true, sha: k.sha, dateien: inhalt, status: status_() };
+  return { ok: true, sha: k.sha, dateien: inhalt, status: status_(k) };
 }
 
 function istErlaubt_(pfad) {

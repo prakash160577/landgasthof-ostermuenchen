@@ -220,18 +220,37 @@ a{color:var(--akzent)}
   function feldLeeren() { $('anweisung').value = ''; }
 
   /* ------------------------------------------------------------ Anmeldung */
-  function anmelden(p) {
+  // Knopf „Änderung vorbereiten“ sperren, solange die Homepage noch geladen wird
+  function bereit(ja) {
+    $('btnVorschlag').disabled = !ja;
+    $('btnVorschlag').textContent = ja ? 'Änderung vorbereiten' : 'Einen Moment …';
+  }
+  function anmelden(p, still) {
     pin = p;
     $('btnAnmelden').disabled = true;
     meldung('anmeldeMeldung', '', '');
+    if (still) { zeige('anmeldung', false); zeige('arbeit', true); $('status').textContent = 'Homepage wird geladen …'; }
+    bereit(false);
     return anfrage('dateien').then(function (j) {
       stand = j;
       speichern('vw_pin', pin);
       zeige('anmeldung', false); zeige('arbeit', true);
       zeigeStatus(j.status);
+      bereit(true);
     }).catch(function (e) {
-      speichern('vw_pin', null);
-      meldung('anmeldeMeldung', 'fehler', e.message);
+      bereit(true);
+      if (/PIN|Zu viele/.test(e.message)) {
+        // gespeicherte PIN stimmt nicht mehr (z. B. geändert) → normale Anmeldung
+        speichern('vw_pin', null);
+        zeige('arbeit', false); zeige('anmeldung', true);
+        meldung('anmeldeMeldung', 'fehler', e.message);
+      } else if (still) {
+        // z. B. kein Netz: angemeldet bleiben, Hinweis zeigen
+        $('status').textContent = 'Homepage konnte nicht geladen werden.';
+        meldung('meldung', 'fehler', e.message + ' Bitte Verbindung prüfen und die App neu öffnen.');
+      } else {
+        meldung('anmeldeMeldung', 'fehler', e.message);
+      }
     }).then(function () { $('btnAnmelden').disabled = false; });
   }
   $('btnAnmelden').onclick = function () { var p = $('pin').value.trim(); if (p) anmelden(p); };
@@ -766,7 +785,7 @@ a{color:var(--akzent)}
 
   /* ------------------------------------------------------------ Start */
   var gemerkt = laden('vw_pin');
-  if (gemerkt) { $('pin').value = gemerkt; anmelden(gemerkt); }
+  if (gemerkt) anmelden(gemerkt, true);
   else $('pin').focus();
 
   // für Tests
