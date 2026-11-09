@@ -363,7 +363,29 @@ a{color:var(--akzent)}
       return !innen;
     });
     var bilder = Array.prototype.slice.call(main.querySelectorAll('img'));
+    // Jedes Bild ist zusätzlich ein Segment (art „bild“), damit es gelöscht oder als Einfügestelle genutzt werden kann
+    var bildBausteine = [];
+    bilder.forEach(function (img) {
+      var b = bildBaustein(img);
+      if (b && bildBausteine.indexOf(b) < 0 && !segs.some(function (sg) { return sg.contains(b) || b.contains(sg); })) bildBausteine.push(b);
+    });
+    segs = segs.concat(bildBausteine).sort(function (x, y) {
+      return x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+    });
     return { pfad: pfad, doc: doc, segs: segs, bilder: bilder, doctype: text.slice(0, text.search(/<html[\s>]/i)) };
+  }
+
+  function bildBaustein(img) { return img.closest('.vw-bild') || img.closest('.module-container-root') || img.parentNode; }
+  function istBild(el) { return el.tagName !== 'IMG' && !!el.querySelector('img') && !bereinigt(el.textContent); }
+  function ausgeblendet(el) { return el.hasAttribute('data-vw-ausgeblendet'); }
+  function ausblenden(el, an) {
+    if (an) { el.setAttribute('data-vw-ausgeblendet', '1'); el.style.display = 'none'; }
+    else { el.removeAttribute('data-vw-ausgeblendet'); el.style.display = ''; if (!el.getAttribute('style')) el.removeAttribute('style'); }
+  }
+  function bildBeschreibung(el) {
+    var img = el.querySelector('img');
+    if (img.classList.contains('tageskarte-bild')) return '[Bild: Tageskarte' + (ausgeblendet(el) ? ', zurzeit ausgeblendet' : '') + ']';
+    return '[Bild: ' + ((img.getAttribute('alt') || '').trim() || (img.getAttribute('src') || '').split('?')[0].split('/').slice(-3).join('/')) + ']';
   }
 
   // Inhalt eines Elements in eingeschränktem HTML (br, strong, em, a)
@@ -503,7 +525,9 @@ a{color:var(--akzent)}
       seiten: seiten.map(function (p) {
         return {
           datei: p.pfad, titel: seitenTitel(p.pfad),
-          segmente: p.segs.map(function (el, i) { return { nr: i, art: el.tagName.toLowerCase(), text: eingeschraenkt(el) }; }),
+          segmente: p.segs.map(function (el, i) {
+            return istBild(el) ? { nr: i, art: 'bild', text: bildBeschreibung(el) } : { nr: i, art: el.tagName.toLowerCase(), text: eingeschraenkt(el) };
+          }),
           bilder: p.bilder.map(function (img, i) {
             return { nr: i, tageskarte: img.classList.contains('tageskarte-bild'), datei: (img.getAttribute('src') || '').split('?')[0].split('/').slice(-3).join('/'), nach_text: umgebung(img) };
           })
@@ -511,6 +535,11 @@ a{color:var(--akzent)}
       }),
       speisekarte: { meta: karte.daten.meta, rubriken: karte.daten.rubriken, hinweise: karte.daten.hinweise },
       gesperrt: ['impressum/index.html', 'datenschutzerklarung/index.html'],
+      hinweise: [
+        'Bilder stehen zusätzlich als Segmente mit art "bild" in der Liste. Ein Bild entfernen: Typ "loeschen" mit dieser Segmentnummer.',
+        'Die Tageskarte erscheint auf mehreren Seiten. "loeschen" auf das Tageskarten-Segment blendet sie auf allen Seiten aus; eine neue Tageskarte (Typ "tageskarte" mit Foto) blendet sie wieder ein.',
+        'Typ "text" ist für Bild-Segmente nicht erlaubt; "einfuegen_nach" hinter einem Bild-Segment ist erlaubt.'
+      ],
       fotos: fotos.length
     };
     zeige('eingabe', false); zeige('ergebnis', false); zeige('arbeitet', true);
@@ -546,7 +575,7 @@ a{color:var(--akzent)}
     function segment(p, nr) { var el = p.segs[nr]; if (!el) throw new Error('Abschnitt ' + nr + ' auf ' + seitenTitel(p.pfad) + ' nicht gefunden.'); return el; }
     // Einfügestelle: hinter einem Textabschnitt oder hinter einem Bild(-baustein)
     function anker(p, a) {
-      if (a.segment != null) return { el: segment(p, a.segment), text: true };
+      if (a.segment != null) { var sg = segment(p, a.segment); return { el: sg, text: !istBild(sg) }; }
       var img = p.bilder[a.bild];
       if (!img) throw new Error('Einfügestelle auf ' + seitenTitel(p.pfad) + ' nicht gefunden.');
       return { el: img.closest('.section-root') || img.closest('.grid-column-root') || img.parentNode, text: false };
@@ -566,6 +595,7 @@ a{color:var(--akzent)}
       switch (a.typ) {
         case 'text':
           p = seite(a.datei); el = segment(p, a.segment);
+          if (istBild(el)) throw new Error('Ein Bild kann nicht als Text geändert werden. Bitte genauer sagen, was passieren soll.');
           var alt = bereinigt(el.textContent);
           textZiel(el).innerHTML = saeubern(a.text, p.doc);
           beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Text geändert', alt: alt, neu: bereinigt(el.textContent) });
@@ -581,8 +611,27 @@ a{color:var(--akzent)}
           break;
         case 'loeschen':
           p = seite(a.datei); el = segment(p, a.segment);
-          beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Text entfernt', alt: bereinigt(el.textContent) });
-          el.remove();
+          if (istBild(el) && el.querySelector('img.tageskarte-bild')) {
+            var seitenTk = [];
+            seiten.forEach(function (sp) {
+              Array.prototype.forEach.call(sp.doc.querySelectorAll('img.tageskarte-bild'), function (t) {
+                ausblenden(bildBaustein(t), true); geaendert[sp.pfad] = sp;
+                if (seitenTk.indexOf(seitenTitel(sp.pfad)) < 0) seitenTk.push(seitenTitel(sp.pfad));
+              });
+            });
+            beschreibung.push({ seite: seitenTk.join(', '), was: 'Tageskarte ausgeblendet (kommt mit der nächsten Tageskarte wieder)', fokusFrei: true });
+          } else if (istBild(el)) {
+            beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Bild entfernt', alt: bildBeschreibung(el).replace(/^\[Bild: |\]$/g, '') });
+            // passende Vorlade-Hinweise im Seitenkopf mit entfernen
+            var bildId = ((el.querySelector('img').getAttribute('src') || '').match(/\/u\/([0-9a-f-]{36})\//) || [])[1];
+            if (bildId) Array.prototype.forEach.call(p.doc.querySelectorAll('link[rel="preload"]'), function (l) {
+              if (((l.getAttribute('imagesrcset') || '') + (l.getAttribute('href') || '')).indexOf(bildId) >= 0) l.remove();
+            });
+            el.remove();
+          } else {
+            beschreibung.push({ seite: seitenTitel(p.pfad), was: 'Text entfernt', alt: bereinigt(el.textContent) });
+            el.remove();
+          }
           break;
         case 'bild_ersetzen':
           p = seite(a.datei); img = p.bilder[a.bild];
@@ -605,6 +654,7 @@ a{color:var(--akzent)}
           neueBilder.push({ pfad: 'tageskarte/tageskarte.jpg', foto: a.foto || 0 });
           seiten.forEach(function (sp) {
             Array.prototype.forEach.call(sp.doc.querySelectorAll('img.tageskarte-bild'), function (t) {
+              ausblenden(bildBaustein(t), false);
               t.setAttribute('src', t.getAttribute('src').replace(/\?v=\d+/, '') + '?v=' + version);
               rahmenAnpassen(t, f.breite, f.hoehe);
               geaendert[sp.pfad] = sp;

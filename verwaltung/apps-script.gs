@@ -201,6 +201,7 @@ var SYSTEM = [
   '- Andere Fotos können ein Bild ersetzen (bild_ersetzen) oder neu eingefügt werden (bild_einfuegen_nach).',
   '- Einfügen geht hinter einem Segment (segment) oder, wenn eine Seite keinen passenden Text hat, hinter einem Bild (bild).',
   '- Neue Texte: Absätze mit Leerzeile trennen.',
+  '- Bilder stehen auch als Segmente mit art "bild" in der Liste: Bild entfernen = Typ „loeschen“ auf dieses Segment. „loeschen“ auf die Tageskarte blendet sie auf allen Seiten aus; eine neue Tageskarte blendet sie wieder ein.',
   '- Impressum und Datenschutzerklärung sind gesperrt. Wird danach gefragt: rueckfrage mit Hinweis, dass nur Andi diese ändert.',
   '- Ist die Anweisung unklar, mehrdeutig oder würde sie viel löschen: keine Änderungen, sondern eine kurze rueckfrage.',
   '- zusammenfassung: 1–3 kurze Sätze in einfachem Deutsch, was geändert wird (für einen Laien).',
