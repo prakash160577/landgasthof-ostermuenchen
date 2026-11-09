@@ -70,6 +70,16 @@ ul.liste li{margin:4px 0}
 .ansicht-leiste button{min-height:44px;padding:10px 14px;background:var(--akzent);color:#fff}
 .ansicht-leiste span{color:var(--leise);font-size:14px}
 .ansicht iframe{flex:1;width:100%;border:0;background:#fff}
+#tippenSeite{flex:1;min-width:0;font:inherit;font-size:16px;padding:10px;border:1.5px solid var(--rand);border-radius:10px;background:#fff;color:var(--text)}
+.tippen-hinweis{padding:8px 14px;font-size:14px;color:var(--leise);background:var(--karte);border-top:1px solid var(--rand)}
+#tippenRahmen{flex:1;width:100%;border:0;background:#fff}
+.tippen-aktion{background:var(--karte);padding:14px 14px calc(14px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(0,0,0,.15);
+  max-height:60vh;overflow:auto}
+.tippen-was{font-size:14px;color:var(--leise);margin-bottom:10px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical}
+.tippen-knoepfe{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tippen-knoepfe button{background:var(--akzent-hell);color:var(--akzent);min-height:48px;padding:10px}
+.tippen-knoepfe button.gefahr{background:#fbe9e3;color:var(--warn)}
+#tippenText{width:100%;font:inherit;border:1.5px solid var(--rand);border-radius:10px;padding:10px;min-height:90px}
 .vorschau{width:100%;height:70vh;border:1px solid var(--rand);border-radius:10px;background:#fff}
 .versteckt{display:none!important}
 .pin{max-width:360px;margin:12vh auto 0}
@@ -113,6 +123,8 @@ a{color:var(--akzent)}
       </div>
       <input id="fotoDatei" type="file" accept="image/*" multiple class="versteckt">
       <div id="fotos" class="fotos"></div>
+      <div style="height:10px"></div>
+      <button id="btnTippen" class="zweit" type="button" style="width:100%">👆 Auf der Seite antippen und ändern</button>
       <div style="height:12px"></div>
       <button id="btnVorschlag" class="haupt">Änderung vorbereiten</button>
       <p class="hinweis">Nichts wird sofort veröffentlicht. Du siehst zuerst eine Vorschau.</p>
@@ -156,6 +168,27 @@ a{color:var(--akzent)}
     <span>Homepage</span>
   </div>
   <iframe id="ansichtRahmen" title="Homepage"></iframe>
+</div>
+
+<div id="tippen" class="ansicht versteckt">
+  <div class="ansicht-leiste">
+    <button id="btnTippenZu" type="button">← Zurück</button>
+    <select id="tippenSeite" aria-label="Seite wählen"></select>
+  </div>
+  <div class="tippen-hinweis">Tippe auf das Bild oder den Text, den du ändern möchtest.</div>
+  <iframe id="tippenRahmen" title="Seite zum Antippen"></iframe>
+  <div id="tippenAktion" class="tippen-aktion versteckt">
+    <div class="tippen-was" id="tippenWas"></div>
+    <div id="tippenKnoepfe" class="tippen-knoepfe"></div>
+    <div id="tippenEditor" class="versteckt">
+      <textarea id="tippenText" rows="4"></textarea>
+      <div class="reihe" style="margin-top:8px">
+        <button id="btnTippenOk" class="haupt" type="button">Weiter zur Vorschau</button>
+        <button id="btnTippenAbbr" class="zweit" type="button">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+  <input id="tippenFoto" type="file" accept="image/*" class="versteckt">
 </div>
 
 <script>
@@ -788,7 +821,7 @@ a{color:var(--akzent)}
   };
   $('btnVerwerfen').onclick = function () {
     plan = null; zeige('ergebnis', false); zeige('eingabe', true); meldung('meldung', '', '');
-    feldLeeren(); setzeKontext('');
+    feldLeeren(); setzeKontext(''); fotos = []; zeigeFotos();
   };
   $('btnNachbessern').onclick = function () {
     var vorher = plan ? plan.anweisung : '';
@@ -807,6 +840,126 @@ a{color:var(--akzent)}
       .then(function (j) { stand = j; zeigeStatus(j.status); meldung('meldung', 'ok', 'Rückgängig gemacht. In 1–2 Minuten ist die Homepage wieder wie vorher.'); })
       .catch(function (e) { meldung('meldung', 'fehler', e.message); btn.disabled = false; });
   };
+
+  /* ------------------------------------------------------------ Tipp-Modus: Element antippen und ändern */
+  var tipp = { datei: null, nr: null, art: null };
+  SEITEN.forEach(function (s) { var o = document.createElement('option'); o.value = s.datei; o.textContent = s.titel.replace(/ \(.*\)$/, ''); $('tippenSeite').appendChild(o); });
+
+  function tippenHtml(pfad) {
+    var p = parse(pfad);
+    p.segs.forEach(function (el, i) { el.setAttribute('data-vw-nr', String(i)); });
+    var html = p.doctype + p.doc.documentElement.outerHTML;
+    var stil = '<style>[data-vw-nr]{outline:2px dashed rgba(96,35,58,.35);outline-offset:2px;cursor:pointer}' +
+      '[data-vw-nr].vw-gewaehlt{outline:3px solid #e0a800!important;outline-offset:3px;background:rgba(224,168,0,.12)}</style>';
+    var skript = '<script>(function(){var g=null;document.addEventListener("click",function(e){e.preventDefault();e.stopPropagation();' +
+      'var t=e.target.closest&&e.target.closest("[data-vw-nr]");if(g)g.classList.remove("vw-gewaehlt");g=t;' +
+      'if(t){t.classList.add("vw-gewaehlt");}parent.postMessage({vwTipp:t?Number(t.getAttribute("data-vw-nr")):null},"*");},true);' +
+      'window.vwAbwahl=function(){if(g)g.classList.remove("vw-gewaehlt");g=null;};})();<\/script>';
+    return html.replace(/<head([^>]*)>/i, '<head$1><base href="' + SITE + ordner(pfad) + '">').replace(/<\/head>/i, stil + '</head>').replace(/<\/body>/i, skript + '</body>');
+  }
+  function tippenLaden(pfad) {
+    tipp = { datei: pfad, nr: null, art: null };
+    zeige('tippenAktion', false);
+    // jedes Mal ein neuer Rahmen, damit keine Verlaufs-Einträge entstehen
+    var alt = $('tippenRahmen'), neu = document.createElement('iframe');
+    neu.id = 'tippenRahmen'; neu.title = 'Seite zum Antippen';
+    neu.srcdoc = tippenHtml(pfad);
+    alt.parentNode.replaceChild(neu, alt);
+  }
+  $('btnTippen').onclick = function () {
+    if (!stand) { meldung('meldung', 'frage', 'Einen Moment – die Homepage wird noch geladen.'); return; }
+    stopp(); meldung('meldung', '', '');
+    zeige('tippen', true); document.body.style.overflow = 'hidden';
+    tippenLaden($('tippenSeite').value);
+    try { history.pushState({ tippen: 1 }, ''); } catch (e) {}
+  };
+  function tippenZu() { zeige('tippen', false); document.body.style.overflow = ''; $('tippenRahmen').removeAttribute('srcdoc'); }
+  function tippenSchliessen() { tippenZu(); if (history.state && history.state.tippen) history.back(); }
+  $('btnTippenZu').onclick = tippenSchliessen;
+  window.addEventListener('popstate', function () { if (!$('tippen').classList.contains('versteckt')) tippenZu(); });
+  $('tippenSeite').onchange = function () { tippenLaden(this.value); };
+
+  window.addEventListener('message', function (e) {
+    if (!e.data || typeof e.data !== 'object' || !('vwTipp' in e.data) || $('tippen').classList.contains('versteckt')) return;
+    var nr = e.data.vwTipp;
+    if (nr === null) { zeige('tippenAktion', false); return; }
+    var p = parse(tipp.datei), el = p.segs[nr];
+    if (!el) return;
+    tipp.nr = nr; tipp.art = istBild(el) ? 'bild' : 'text';
+    tipp.tageskarte = !!el.querySelector('img.tageskarte-bild');
+    tipp.bild = tipp.art === 'bild' ? p.bilder.indexOf(el.querySelector('img')) : -1;
+    tipp.textHtml = tipp.art === 'text' ? eingeschraenkt(el) : '';
+    $('tippenWas').textContent = tipp.art === 'bild' ? (tipp.tageskarte ? 'Ausgewählt: Tageskarte (auf allen Seiten)' : 'Ausgewählt: Bild')
+                                                     : 'Ausgewählt: „' + kurz(bereinigt(el.textContent), 140) + '“';
+    var k = tipp.art === 'bild'
+      ? [['loeschen', '🗑 Entfernen', 'gefahr'], ['ersetzen', '📷 Durch Foto ersetzen'], ['danach', '➕ Text darunter'], ['claude', '🎤 Claude dazu fragen']]
+      : [['aendern', '✏️ Text ändern'], ['loeschen', '🗑 Entfernen', 'gefahr'], ['danach', '➕ Text darunter'], ['claude', '🎤 Claude dazu fragen']];
+    $('tippenKnoepfe').innerHTML = k.map(function (x) { return '<button type="button" data-a="' + x[0] + '" class="' + (x[2] || '') + '">' + x[1] + '</button>'; }).join('');
+    Array.prototype.forEach.call($('tippenKnoepfe').children, function (b) { b.onclick = function () { tippAktion(b.dataset.a); }; });
+    zeige('tippenKnoepfe', true); zeige('tippenEditor', false); zeige('tippenAktion', true);
+  });
+
+  function htmlZuText(h) { var d = document.createElement('div'); d.innerHTML = h.replace(/<br\s*\/?>/gi, '\n'); return d.textContent.trim(); }
+  function textZuHtml(t, vorlage) {
+    var h = esc(t.trim()).replace(/\n/g, '<br>');
+    // war der ganze Abschnitt fett, bleibt er fett
+    if (/^<strong>[\s\S]*<\/strong>$/.test(vorlage) && vorlage.indexOf('</strong>') === vorlage.length - 9) h = '<strong>' + h + '</strong>';
+    return h;
+  }
+  var editorModus = null;
+  function tippAktion(a) {
+    var titel = seitenTitel(tipp.datei);
+    if (a === 'loeschen') {
+      return tippPlan(tipp.tageskarte ? 'Die Tageskarte wird auf allen Seiten ausgeblendet.' : (tipp.art === 'bild' ? 'Das Bild wird von der Seite „' + titel + '“ entfernt.' : 'Der Text wird von der Seite „' + titel + '“ entfernt.'),
+        [{ typ: 'loeschen', datei: tipp.datei, segment: tipp.nr }]);
+    }
+    if (a === 'ersetzen') { $('tippenFoto').click(); return; }
+    if (a === 'aendern' || a === 'danach') {
+      editorModus = a;
+      $('tippenText').value = a === 'aendern' ? htmlZuText(tipp.textHtml) : '';
+      $('tippenText').placeholder = a === 'danach' ? 'Neuer Text, der darunter erscheinen soll' : '';
+      zeige('tippenKnoepfe', false); zeige('tippenEditor', true);
+      setTimeout(function () { $('tippenText').focus(); }, 50);
+      return;
+    }
+    if (a === 'claude') {
+      var p = parse(tipp.datei), el = p.segs[tipp.nr];
+      var beschr = tipp.art === 'bild' ? bildBeschreibung(el) : '„' + kurz(bereinigt(el.textContent), 120) + '“';
+      setzeKontext('Es geht um diese Stelle: Seite ' + tipp.datei + ', Segment ' + tipp.nr + ' ' + beschr + '.');
+      tippenSchliessen();
+      feldLeeren();
+      meldung('meldung', 'frage', 'Sag oder schreib jetzt, was mit der ausgewählten Stelle passieren soll.');
+    }
+  }
+  $('btnTippenAbbr').onclick = function () { zeige('tippenEditor', false); zeige('tippenKnoepfe', true); };
+  $('btnTippenOk').onclick = function () {
+    var t = $('tippenText').value;
+    if (!t.trim()) { $('tippenText').focus(); return; }
+    if (editorModus === 'aendern') {
+      tippPlan('Der Text auf der Seite „' + seitenTitel(tipp.datei) + '“ wird geändert.', [{ typ: 'text', datei: tipp.datei, segment: tipp.nr, text: textZuHtml(t, tipp.textHtml) }]);
+    } else {
+      tippPlan('Auf der Seite „' + seitenTitel(tipp.datei) + '“ kommt ein neuer Text dazu.', [{ typ: 'einfuegen_nach', datei: tipp.datei, segment: tipp.nr, text: esc(t.trim()).replace(/\n(?!\n)/g, '<br>') }]);
+    }
+  };
+  $('tippenFoto').onchange = function () {
+    var d = this.files && this.files[0]; this.value = '';
+    if (!d) return;
+    verkleinern(d).then(function (f) {
+      fotos = [f]; zeigeFotos();
+      tippPlan(tipp.tageskarte ? 'Die Tageskarte wird durch dein Foto ersetzt.' : 'Das Bild wird durch dein Foto ersetzt.',
+        tipp.tageskarte ? [{ typ: 'tageskarte', foto: 0 }] : [{ typ: 'bild_ersetzen', datei: tipp.datei, bild: tipp.bild, foto: 0 }]);
+    }).catch(function () { meldung('meldung', 'fehler', 'Das Foto konnte nicht gelesen werden.'); });
+  };
+  // Änderung direkt (ohne Claude) vorbereiten und Vorschau zeigen
+  function tippPlan(zusammenfassung, aenderungen) {
+    try {
+      var seiten = SEITEN.map(function (x) { return parse(x.datei); });
+      plan = anwenden({ zusammenfassung: zusammenfassung, aenderungen: aenderungen }, seiten, karteLesen(), zusammenfassung);
+    } catch (e) { meldung('meldung', 'fehler', e.message); tippenSchliessen(); return; }
+    tippenSchliessen();
+    setzeKontext(''); feldLeeren(); meldung('meldung', '', '');
+    zeige('eingabe', false); zeigeErgebnis();
+  }
 
   /* ------------------------------------------------------------ Homepage in der App ansehen */
   // Für jede Ansicht ein neuer Rahmen, damit die Handy-Zurück-Taste sauber funktioniert.
