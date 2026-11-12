@@ -125,6 +125,10 @@ a{color:var(--akzent)}
       <div id="fotos" class="fotos"></div>
       <div style="height:10px"></div>
       <button id="btnTippen" class="zweit" type="button" style="width:100%">👆 Auf der Seite antippen und ändern</button>
+      <div style="height:10px"></div>
+      <button id="btnKarteFotos" class="zweit" type="button" style="width:100%">📋 Speisekarte aus Fotos übernehmen</button>
+      <input id="karteDatei" type="file" accept="image/*" multiple class="versteckt">
+      <p class="hinweis">Für jede Seite der gedruckten Karte ein Foto (bis zu 8). Rubriken, die auf keinem Foto sind, bleiben wie sie sind.</p>
       <div style="height:12px"></div>
       <button id="btnVorschlag" class="haupt">Änderung vorbereiten</button>
       <p class="hinweis">Nichts wird sofort veröffentlicht. Du siehst zuerst eine Vorschau.</p>
@@ -216,6 +220,7 @@ a{color:var(--akzent)}
   var fotos = [];        // { gross: dataURL, klein: base64, breite, hoehe }
   var plan = null;       // vorbereitete Änderung
   var kontext = '';      // vorherige Anweisung/Rückfrage, auf die sich die nächste Eingabe bezieht
+  var entwurf = null;    // aus Fotos übernommene, noch nicht veröffentlichte Speisekarte { text, beschreibung, zusammenfassung }
   var $ = function (id) { return document.getElementById(id); };
 
   /* ------------------------------------------------------------ Hilfen */
@@ -288,7 +293,7 @@ a{color:var(--akzent)}
   }
   $('btnAnmelden').onclick = function () { var p = $('pin').value.trim(); if (p) anmelden(p); };
   $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('btnAnmelden').click(); });
-  $('btnKontextWeg').onclick = function () { setzeKontext(''); };
+  $('btnKontextWeg').onclick = function () { setzeKontext(''); entwurf = null; };
   $('btnAbmelden').onclick = function () { speichern('vw_pin', null); location.reload(); };
 
   function zeigeStatus(s) {
@@ -486,7 +491,7 @@ a{color:var(--akzent)}
     throw new Error('Speisekarte: Klammer nicht gefunden');
   }
   function karteLesen() {
-    var text = stand.dateien[KARTE];
+    var text = entwurf ? entwurf.text : stand.dateien[KARTE];
     var a = text.indexOf('{', text.indexOf('window.SPEISEKARTE'));
     var e = klammerEnde(text, a);
     var roh = text.slice(a, e).replace(/("(?:[^"\\]|\\.)*")|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, function (m, s) { return s || ''; });
@@ -593,6 +598,275 @@ a{color:var(--akzent)}
       })
       .catch(function (e) { zeige('arbeitet', false); zeige('eingabe', true); meldung('meldung', 'fehler', e.message); });
   };
+
+  /* ------------------------------------------------------------ Speisekarte aus Fotos */
+  var KARTE_MAX_FOTOS = 8;
+  $('btnKarteFotos').onclick = function () { stopp(); $('karteDatei').click(); };
+  $('karteDatei').onchange = function () {
+    var dateien = Array.prototype.slice.call(this.files || []);
+    this.value = '';
+    if (!dateien.length) return;
+    if (dateien.length > KARTE_MAX_FOTOS) {
+      meldung('meldung', 'fehler', 'Bitte höchstens ' + KARTE_MAX_FOTOS + ' Fotos auf einmal auswählen.'); return;
+    }
+    karteAusFotos(dateien);
+  };
+
+  // Foto für die Texterkennung: lange Kante 1568 px (mehr nutzt Claude nicht), gut lesbar
+  function fotoFuerLesen(datei) {
+    return new Promise(function (ok, nein) {
+      var url = URL.createObjectURL(datei), img = new Image();
+      img.onload = function () {
+        var f = Math.min(1, 1568 / Math.max(img.naturalWidth, img.naturalHeight));
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.naturalWidth * f); c.height = Math.round(img.naturalHeight * f);
+        var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        ok(c.toDataURL('image/jpeg', 0.88).split(',')[1]);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); nein(new Error('Ein Foto konnte nicht gelesen werden.')); };
+      img.src = url;
+    });
+  }
+
+  function karteAnweisung(nr, anzahl) {
+    return [
+      'SPEISEKARTE AUS FOTO ÜBERNEHMEN (Foto ' + nr + ' von ' + anzahl + ').',
+      'Das Foto zeigt eine Seite der gedruckten Speisekarte. Schreibe ALLE Rubriken und Einträge auf dem Foto vollständig ab.',
+      'Antworte mit genau einer Änderung vom Typ „speisekarte_setzen“ pro Rubrik auf dem Foto, in der Reihenfolge auf dem Foto:',
+      '- pfad: ["rubriken", NR] – NR ist die Nummer (nr) der passenden bestehenden Rubrik aus „speisekarte.rubriken“ (gleiche Bedeutung reicht), oder -1, wenn es die Rubrik noch nicht gibt.',
+      '- wert: { "titel": "...", "gerichte": [ ... ] } – bei einer neuen Rubrik zusätzlich "darstellung": "speisen", "getraenke", "zweispaltig" oder "tee".',
+      '- Ein Eintrag: { "name": "...", "beschreibung": "..." (nur wenn vorhanden), "preis": 15.8 } – Preis als Zahl, nur wenn kein Betrag dasteht als Text (z. B. "gratis").',
+      '  Mehrere Größen: { "name": "...", "varianten": [ { "menge": "kl.", "preis": 4.8 }, { "menge": "gr.", "preis": 7.8 } ] }. Bei Getränken die Felder so wie in der bestehenden Rubrik (z. B. "menge").',
+      'Regeln:',
+      '- Hervorgehobener Hauptteil = name, der Zusatz (mit …, Zutaten, Klammern) = beschreibung.',
+      '- Steht ein Eintrag schon in der bestehenden Rubrik (gleiches Gericht, auch bei Tippfehlern auf dem Foto), übernimm genau dessen Schreibweise und Aufteilung in name/beschreibung – außer der Text hat sich inhaltlich geändert. Preise immer vom Foto.',
+      '- Neue Einträge so schreiben wie auf dem Foto, nur offensichtliche Tippfehler verbessern. Nichts erfinden, nichts weglassen.',
+      '- Kein Feld "sichtbar" angeben.',
+      '- Ist das Foto keine Speisekarte, oder sind Einträge/Preise nicht sicher lesbar (unscharf, abgeschnitten): keine Änderungen, sondern eine kurze rueckfrage, was mit dem Foto nicht stimmt.',
+      '- zusammenfassung: welche Rubriken auf dem Foto stehen.'
+    ].join('\n');
+  }
+
+  function karteFuerClaude(daten) {
+    return {
+      rubriken: daten.rubriken.map(function (r, i) {
+        return {
+          nr: i, titel: r.titel, darstellung: r.darstellung,
+          gerichte: (r.gerichte || []).map(function (g) {
+            var o = {}; Object.keys(g).forEach(function (k) { if (k !== 'sichtbar' && k !== 'abstand_davor') o[k] = g[k]; });
+            if (g.sichtbar === false) o.zurzeit_nicht_auf_der_karte = true;
+            return o;
+          })
+        };
+      })
+    };
+  }
+
+  function karteAusFotos(dateien) {
+    meldung('meldung', '', '');
+    entwurf = null; setzeKontext(''); plan = null;
+    zeige('eingabe', false); zeige('ergebnis', false); zeige('arbeitet', true);
+    var karte = karteLesen(), ergebnisse = [];
+    var inhalt = { speisekarte: karteFuerClaude(karte.daten), seiten: [], hinweise: ['Nur die Speisekarte ist betroffen.'] };
+    var kette = Promise.resolve();
+    dateien.forEach(function (datei, i) {
+      kette = kette.then(function () {
+        $('arbeitetText').textContent = 'Seite ' + (i + 1) + ' von ' + dateien.length + ' wird gelesen … (etwa eine halbe Minute pro Seite)';
+        return fotoFuerLesen(datei);
+      }).then(function (b64) {
+        var frage = function () { return anfrage('vorschlag', { anweisung: karteAnweisung(i + 1, dateien.length), inhalt: inhalt, fotos: [b64] }); };
+        // einmal automatisch wiederholen, falls die Verbindung abbricht
+        return frage().catch(function (e) { if (/PIN|Guthaben|Zugang/.test(e.message)) throw e; return frage(); });
+      }).then(function (j) {
+        var v = j.vorschlag || {};
+        var teile = (v.aenderungen || []).filter(function (a) {
+          return a.typ === 'speisekarte_setzen' && a.wert && Array.isArray(a.wert.gerichte);
+        });
+        if (!teile.length) {
+          throw new Error('Foto ' + (i + 1) + ': ' + (v.rueckfrage || 'Auf dem Foto wurde keine Speisekarte erkannt.') +
+                          ' Bitte ein schärferes Foto von dieser Seite machen und noch einmal versuchen.');
+        }
+        teile.forEach(function (a) {
+          var nr = Number(a.pfad && a.pfad[1]);
+          ergebnisse.push({ nr: karte.daten.rubriken[nr] ? nr : -1, wert: a.wert });
+        });
+      });
+    });
+    kette.then(function () {
+      var e = karteZusammenfuehren(karte, ergebnisse);
+      if (!e.beschreibung.length) {
+        zeige('arbeitet', false); zeige('eingabe', true);
+        meldung('meldung', 'ok', 'Alles gelesen: Die Speisekarte auf der Homepage ist schon auf diesem Stand. Es gibt nichts zu ändern.');
+        return;
+      }
+      karte.daten.meta.stand = heute();
+      var version = String(Date.now()).slice(0, 10);
+      var sk = stand.dateien['speisekarte/index.html'].replace(/speisekarte-ohne-deckblatt\.html\?v=\d+/, 'speisekarte-ohne-deckblatt.html?v=' + version);
+      plan = {
+        ausFotos: true,
+        zusammenfassung: 'Speisekarte aus ' + dateien.length + (dateien.length === 1 ? ' Foto' : ' Fotos') + ' übernommen: ' + e.zahlen + '.',
+        anweisung: 'Speisekarte aus Fotos übernommen',
+        beschreibung: e.beschreibung,
+        dateien: [{ pfad: KARTE, inhalt: karteSchreiben(karte) }, { pfad: 'speisekarte/index.html', inhalt: sk }],
+        neueBilder: []
+      };
+      zeigeErgebnis();
+    }).catch(function (e) {
+      zeige('arbeitet', false); zeige('eingabe', true); meldung('meldung', 'fehler', e.message);
+    });
+  }
+
+  function vergleichsText(s) {
+    return String(s || '').toLowerCase().replace(/ß/g, 'ss').replace(/[äöü]/g, function (c) { return { 'ä': 'a', 'ö': 'o', 'ü': 'u' }[c]; })
+      .replace(/[^a-z0-9]+/g, '');
+  }
+  function preisText(g) {
+    if (g.varianten) return g.varianten.map(function (x) { return (x.menge ? x.menge + ' ' : '') + anzeige(x.preis); }).join(' / ');
+    return g.preis == null ? '' : anzeige(g.preis);
+  }
+  function abstand(a, b) {   // Levenshtein
+    var v = [], i, j, alt2, tmp;
+    for (j = 0; j <= b.length; j++) v[j] = j;
+    for (i = 1; i <= a.length; i++) {
+      alt2 = v[0]; v[0] = i;
+      for (j = 1; j <= b.length; j++) { tmp = v[j]; v[j] = Math.min(v[j] + 1, v[j - 1] + 1, alt2 + (a[i - 1] === b[j - 1] ? 0 : 1)); alt2 = tmp; }
+    }
+    return v[b.length];
+  }
+  function gerichtText(g) { return [g.name, g.beschreibung, g.menge].filter(Boolean).join(' '); }
+  function slug(t) { return vergleichsText(t.replace(/\s+/g, '-')).slice(0, 30) || 'rubrik'; }
+  function preisZahl(p) {
+    if (typeof p === 'number') return Math.round(p * 100) / 100;
+    var m = String(p == null ? '' : p).replace(',', '.').match(/^\s*(\d+(?:\.\d+)?)\s*€?\s*$/);
+    return m ? Number(m[1]) : p;
+  }
+  function eintragSaeubern(g) {
+    var o = { name: String(g.name || '').trim() };
+    if (g.beschreibung && String(g.beschreibung).trim()) o.beschreibung = String(g.beschreibung).trim();
+    if (g.menge) o.menge = String(g.menge).trim();
+    if (Array.isArray(g.varianten) && g.varianten.length) {
+      o.varianten = g.varianten.map(function (x) { var v = {}; if (x.menge) v.menge = String(x.menge); v.preis = preisZahl(x.preis); return v; });
+    } else o.preis = preisZahl(g.preis);
+    return o;
+  }
+
+  // Ergebnisse aller Fotos in die Karte einarbeiten. Nichts wird gelöscht: was fehlt, wird nur ausgeblendet.
+  function karteZusammenfuehren(karte, ergebnisse) {
+    var rubriken = karte.daten.rubriken, beschreibung = [], zahl = { neu: 0, preis: 0, weg: 0, text: 0 };
+    // gleiche Rubrik auf mehreren Fotos (Fortsetzung) zusammenfassen
+    var gruppen = [];
+    ergebnisse.forEach(function (e) {
+      var titel = String(e.wert.titel || '').trim();
+      if (e.nr < 0) {   // neue Rubrik? evtl. doch gleicher Titel wie eine bestehende
+        rubriken.some(function (r, i) { if (vergleichsText(r.titel) === vergleichsText(titel)) { e.nr = i; return true; } });
+      }
+      var schluessel = e.nr >= 0 ? 'nr' + e.nr : 'neu:' + vergleichsText(titel);
+      var gr = gruppen.filter(function (x) { return x.schluessel === schluessel; })[0];
+      if (gr) gr.gerichte = gr.gerichte.concat(e.wert.gerichte);
+      else gruppen.push({ schluessel: schluessel, nr: e.nr, titel: titel, darstellung: e.wert.darstellung, gerichte: e.wert.gerichte.slice() });
+    });
+
+    var zuletzt = null;   // zuletzt bearbeitete Rubrik (für die Position neuer Rubriken)
+    gruppen.forEach(function (gr, gi) {
+      var neuEintraege = gr.gerichte.filter(function (g) { return g && g.name; }).map(eintragSaeubern);
+      var r;
+      if (gr.nr >= 0) {
+        r = rubriken[gr.nr];
+        var alt = (r.gerichte || []).slice(), benutzt = [];
+        // 1. Durchgang: genau gleiche Einträge, 2. Durchgang: gleicher Name bzw. fast gleich (Tippfehler)
+        var treffer = neuEintraege.map(function (n) {
+          var k = vergleichsText(gerichtText(n));
+          for (var i = 0; i < alt.length; i++) if (benutzt.indexOf(i) < 0 && vergleichsText(gerichtText(alt[i])) === k) { benutzt.push(i); return i; }
+          return -1;
+        });
+        treffer = treffer.map(function (t0, ni) {
+          if (t0 >= 0) return t0;
+          var n = neuEintraege[ni], k = vergleichsText(gerichtText(n)), nm = vergleichsText(n.name), i, kand = [];
+          for (i = 0; i < alt.length; i++) if (benutzt.indexOf(i) < 0 && vergleichsText(alt[i].name) === nm) kand.push(i);
+          if (kand.length === 1) {
+            benutzt.push(kand[0]);
+            if (abstand(vergleichsText(gerichtText(alt[kand[0]])), k) <= 2) n.vertippt = true;   // nur Tippfehler im Zusatz
+            return kand[0];
+          }
+          if (kand.length) return -1;
+          var beste = -1, bd = 3;
+          for (i = 0; i < alt.length; i++) {
+            if (benutzt.indexOf(i) >= 0) continue;
+            var d = abstand(vergleichsText(gerichtText(alt[i])), k);
+            if (d < bd) { bd = d; beste = i; }
+          }
+          if (beste >= 0 && k.length >= 8) { n.vertippt = true; benutzt.push(beste); return beste; }
+          return -1;
+        });
+        var gerichte = neuEintraege.map(function (n, ni) {
+          var i = treffer[ni];
+          if (i < 0) {
+            zahl.neu++;
+            beschreibung.push({ seite: 'Speisekarte', was: r.titel + ' – neu', neu: gerichtText(n) + ' ' + preisText(n), fokus: n.name });
+            n.sichtbar = true; return n;
+          }
+          var g = alt[i], vorherPreis = preisText(g), vorherText = gerichtText(g), warAus = g.sichtbar === false;
+          if (n.vertippt) { delete n.vertippt; ['name', 'beschreibung', 'menge'].forEach(function (k) { if (g[k] === undefined) delete n[k]; else n[k] = g[k]; }); }
+          ['name', 'beschreibung', 'menge', 'preis', 'varianten'].forEach(function (k) { if (n[k] === undefined) delete g[k]; else g[k] = n[k]; });
+          g.sichtbar = true;
+          if (warAus) {
+            zahl.neu++;
+            beschreibung.push({ seite: 'Speisekarte', was: r.titel + ' – wieder auf der Karte', neu: gerichtText(g) + ' ' + preisText(g), fokus: g.name });
+          } else if (vorherText !== gerichtText(g)) {
+            zahl.text++;
+            beschreibung.push({ seite: 'Speisekarte', was: r.titel + ' – Text geändert', alt: vorherText + ' ' + vorherPreis, neu: gerichtText(g) + ' ' + preisText(g), fokus: g.name });
+          } else if (vorherPreis !== preisText(g)) {
+            zahl.preis++;
+            beschreibung.push({ seite: 'Speisekarte', was: r.titel + ' – neuer Preis: ' + g.name, alt: vorherPreis, neu: preisText(g), fokus: g.name });
+          }
+          return g;
+        });
+        // was nicht mehr auf dem Foto steht: ausblenden (bleibt gespeichert und kann wieder aktiviert werden)
+        alt.forEach(function (g, i) {
+          if (benutzt.indexOf(i) >= 0) return;
+          if (g.sichtbar !== false) {
+            zahl.weg++;
+            beschreibung.push({ seite: 'Speisekarte', was: r.titel + ' – nicht mehr auf der Karte (ausgeblendet)', alt: gerichtText(g) + ' ' + preisText(g) });
+            g.sichtbar = false;
+          }
+          gerichte.push(g);
+        });
+        r.gerichte = gerichte;
+        if (r.sichtbar === false) {
+          r.sichtbar = true;
+          beschreibung.push({ seite: 'Speisekarte', was: 'Rubrik „' + r.titel + '“ wieder eingeblendet', fokus: r.titel });
+        }
+      } else {
+        var ids = rubriken.map(function (x) { return x.id; }), id = slug(gr.titel), n2 = 2;
+        while (ids.indexOf(id) >= 0) id = slug(gr.titel) + '-' + n2++;
+        r = { id: id, titel: gr.titel, darstellung: ['speisen', 'getraenke', 'zweispaltig', 'tee'].indexOf(gr.darstellung) >= 0 ? gr.darstellung : 'speisen',
+              sichtbar: true, gerichte: neuEintraege.map(function (n) { n.sichtbar = true; return n; }) };
+        // Position: hinter der vorher bearbeiteten Rubrik, sonst vor der nächsten bekannten, sonst ans Ende
+        var pos;
+        if (zuletzt) pos = rubriken.indexOf(zuletzt) + 1;
+        else {
+          var naechste = gruppen.slice(gi + 1).filter(function (x) { return x.nr >= 0; })[0];
+          pos = naechste ? rubriken.indexOf(karte.daten.rubriken[naechste.nr]) : rubriken.length;
+        }
+        // Nummern der späteren Gruppen bleiben gültig, weil sie per Objekt gesucht werden
+        gruppen.forEach(function (x) { if (x.nr >= 0 && !x.obj) x.obj = rubriken[x.nr]; });
+        rubriken.splice(pos, 0, r);
+        gruppen.forEach(function (x) { if (x.obj) x.nr = rubriken.indexOf(x.obj); });
+        zahl.neu += r.gerichte.length;
+        beschreibung.push({ seite: 'Speisekarte', was: 'Neue Rubrik „' + r.titel + '“ mit ' + r.gerichte.length + ' Einträgen',
+          neu: r.gerichte.map(function (g) { return g.name + ' ' + preisText(g); }).join(' · '), fokus: r.titel });
+      }
+      zuletzt = r;
+    });
+    var z = [];
+    if (zahl.neu) z.push(zahl.neu + ' neu');
+    if (zahl.preis) z.push(zahl.preis + ' Preis' + (zahl.preis > 1 ? 'e' : '') + ' geändert');
+    if (zahl.text) z.push(zahl.text + ' Text' + (zahl.text > 1 ? 'e' : '') + ' geändert');
+    if (zahl.weg) z.push(zahl.weg + ' ausgeblendet');
+    return { beschreibung: beschreibung, zahlen: z.join(', ') };
+  }
 
   /* ------------------------------------------------------------ Änderungen anwenden */
   function anwenden(v, seiten, karte, anweisung) {
@@ -719,17 +993,20 @@ a{color:var(--akzent)}
       var p = geaendert[pfad];
       return { pfad: pfad, inhalt: p.doctype + p.doc.documentElement.outerHTML + '\n' };
     });
-    if (karteGeaendert) {
-      karte.daten.meta.stand = heute();
-      dateien.push({ pfad: KARTE, inhalt: karteSchreiben(karte) });
+    if (karteGeaendert || entwurf) {
+      if (karteGeaendert) karte.daten.meta.stand = heute();
+      dateien.push({ pfad: KARTE, inhalt: karteGeaendert ? karteSchreiben(karte) : entwurf.text });
       // Einbettung auf der Speisekarten-Seite neu laden lassen
       var sk = dateien.filter(function (d) { return d.pfad === 'speisekarte/index.html'; })[0];
       var basis = sk ? sk.inhalt : stand.dateien['speisekarte/index.html'];
       var neuSk = basis.replace(/speisekarte-ohne-deckblatt\.html\?v=\d+/, 'speisekarte-ohne-deckblatt.html?v=' + version);
       if (sk) sk.inhalt = neuSk; else dateien.push({ pfad: 'speisekarte/index.html', inhalt: neuSk });
     }
+    if (entwurf) {   // Nachbesserung einer aus Fotos übernommenen Karte: beides zusammen veröffentlichen
+      beschreibung = entwurf.beschreibung.concat(beschreibung);
+    }
     return {
-      zusammenfassung: v.zusammenfassung || 'Änderung vorbereitet.',
+      zusammenfassung: (entwurf ? entwurf.zusammenfassung + ' ' : '') + (v.zusammenfassung || 'Änderung vorbereitet.'),
       anweisung: anweisung, beschreibung: beschreibung, dateien: dateien, neueBilder: neueBilder
     };
   }
@@ -812,7 +1089,7 @@ a{color:var(--akzent)}
       .then(function () { return anfrage('dateien'); })
       .then(function (j) {
         stand = j; zeigeStatus(j.status);
-        plan = null; fotos = []; zeigeFotos(); feldLeeren(); setzeKontext('');
+        plan = null; entwurf = null; fotos = []; zeigeFotos(); feldLeeren(); setzeKontext('');
         zeige('arbeitet', false); zeige('eingabe', true);
         meldung('meldung', 'ok', 'Veröffentlicht! In 1–2 Minuten ist die Änderung auf der Homepage sichtbar.');
       })
@@ -820,11 +1097,21 @@ a{color:var(--akzent)}
       .then(function () { btn.disabled = false; });
   };
   $('btnVerwerfen').onclick = function () {
-    plan = null; zeige('ergebnis', false); zeige('eingabe', true); meldung('meldung', '', '');
+    plan = null; entwurf = null; zeige('ergebnis', false); zeige('eingabe', true); meldung('meldung', '', '');
     feldLeeren(); setzeKontext(''); fotos = []; zeigeFotos();
   };
   $('btnNachbessern').onclick = function () {
     var vorher = plan ? plan.anweisung : '';
+    var kt = plan && plan.dateien.filter(function (d) { return d.pfad === KARTE; })[0];
+    if (kt && (plan.ausFotos || entwurf)) {
+      // Die übernommene Karte bleibt als Entwurf stehen; die Nachbesserung baut darauf auf
+      entwurf = {
+        text: kt.inhalt,
+        beschreibung: plan.beschreibung.filter(function (b) { return b.seite === 'Speisekarte'; }),
+        zusammenfassung: entwurf ? entwurf.zusammenfassung : plan.zusammenfassung
+      };
+      vorher = 'Die Speisekarte wurde aus Fotos übernommen und ist schon im aktuellen Inhalt enthalten (noch nicht veröffentlicht).';
+    }
     plan = null; zeige('ergebnis', false); zeige('eingabe', true);
     setzeKontext(vorher + '\nNachbesserung:');
     feldLeeren();
